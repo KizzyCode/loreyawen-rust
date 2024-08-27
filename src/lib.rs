@@ -29,9 +29,9 @@ pub enum Direction {
 /// A loreyawen session state
 pub trait SessionState {
     /// The network session key used to authenticate packets
-    fn nwkskey(&self) -> [u8; 16];
+    fn nwkskey(&self) -> &[u8; 16];
     /// The application session key used to encrypt payloads
-    fn appskey(&self) -> [u8; 16];
+    fn appskey(&self) -> &[u8; 16];
     /// The device address
     fn device_address(&self) -> u32;
 

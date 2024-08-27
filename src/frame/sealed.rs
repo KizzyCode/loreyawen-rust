@@ -59,7 +59,7 @@ where
 
         // Encrypt payload
         let appskey = self.session.appskey();
-        CipherstreamBuilder::<Aes>::new(&appskey)
+        CipherstreamBuilder::<Aes>::new(appskey)
             .set_direction(self.direction)
             .set_address(address)
             .set_frame_counter(next_frame_counter)
@@ -67,7 +67,7 @@ where
 
         // Compute MIC
         let nwkskey = self.session.nwkskey();
-        *raw.mic_mut() = MicBuilder::<Aes>::new(&nwkskey)
+        *raw.mic_mut() = MicBuilder::<Aes>::new(nwkskey)
             .set_direction(self.direction)
             .set_address(address)
             .set_frame_counter(next_frame_counter)

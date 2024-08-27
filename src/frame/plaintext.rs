@@ -105,7 +105,7 @@ where
 
         // Validate MIC
         let nwkskey = self.session.nwkskey();
-        let mic_valid = MicBuilder::<Aes>::new(&nwkskey)
+        let mic_valid = MicBuilder::<Aes>::new(nwkskey)
             .set_direction(self.direction)
             .set_address(self.raw.address())
             .set_frame_counter(frame_counter)
@@ -117,7 +117,7 @@ where
 
         // Decrypt payload
         let appskey = self.session.appskey();
-        CipherstreamBuilder::<Aes>::new(&appskey)
+        CipherstreamBuilder::<Aes>::new(appskey)
             .set_direction(self.direction)
             .set_address(self.raw.address())
             .set_frame_counter(frame_counter)

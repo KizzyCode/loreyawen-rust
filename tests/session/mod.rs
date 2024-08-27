@@ -17,12 +17,12 @@ pub struct MockSession {
     pub frame_counter_downlink: u32,
 }
 impl SessionState for &mut MockSession {
-    fn nwkskey(&self) -> [u8; 16] {
-        self.nwkskey
+    fn nwkskey(&self) -> &[u8; 16] {
+        &self.nwkskey
     }
 
-    fn appskey(&self) -> [u8; 16] {
-        self.appskey
+    fn appskey(&self) -> &[u8; 16] {
+        &self.appskey
     }
 
     fn device_address(&self) -> u32 {
