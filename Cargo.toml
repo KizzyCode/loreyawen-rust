@@ -1,0 +1,42 @@
+[package]
+name = "loreyawen"
+version = "0.1.0"
+edition = "2021"
+authors = ["KizzyCode Software Labs./Keziah Biermann <development@kizzycode.de>"]
+keywords = ["encryption", "lora", "embedded", "no-std"]
+categories = ["no-std", "cryptography", "embedded", "network-programming"]
+description = "An encrypted connection for low-datarate networks by piggybacking on LoRaWANs link encryption"
+license = "BSD-2-Clause OR MIT"
+repository = "https://github.com/KizzyCode/loreyawen-rust"
+readme = "README.md"
+
+
+[badges]
+appveyor = { repository = "KizzyCode/loreyawen-rust" }
+
+
+[features]
+default = ["aes"]
+aes = ["dep:aes"]
+
+
+[dependencies]
+cipher = { version = "0.4.4", default-features = false }
+cmac = { version = "0.7.2", default-features = false }
+ctr = { version = "0.9.2", default-features = false }
+
+# `aes` is optional as you can inject your own implementation instead
+[dependencies.aes]
+version = "0.8.4"
+default-features = false
+optional = true
+
+
+[dev-dependencies]
+
+
+[profile.release]
+overflow-checks = true
+
+[profile.bench]
+overflow-checks = true
