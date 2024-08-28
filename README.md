@@ -35,7 +35,7 @@ different physical networks, as it does not contain any LoRa-specific parts.
 
 ## Frame Format and Deviations from LoRaWAN Uplink/Downlink Frames
 `loreyawen` uses a LoRaWAN-proprietary frame format, with the following fields:
-- 1 byte `MHDR`, fixed to `0b111_000_00`
+- 1 byte `MHDR`, fixed to `0b111_000_00` (indicates a "proprietary" frame for LoRaWAN version 1.0)
 - 7 bytes `FHDR`, consisting of 4 bytes `DevAddr`, 2 bytes `FCnt`, and 1 byte `FPort`
 - N bytes payload
 - 8 bytes `MIC` (which is just a less-truncated version of the default LoRaWAN MIC)
@@ -49,7 +49,7 @@ MHDR[1] | DevAddr[4] | FCtrl[1] | FCnt[2] | FOpts[0..15] | FPort[0..1] | Payload
 ```
 
 This format is pretty similar to the regular uplink/downlink frames. The unused `FCtrl` and `FOpts` fields are ommitted,
-and we use the `FPort` field to indicate this protocol version (`0x01` for this version). Also, the MIC is truncated to
+and we use the `FPort` field to indicate the protocol version (`0x01` for this version). Also, the MIC is truncated to
 64 bit, not just 32 bit as in default LoRaWAN.
 
 The resulting frames should be compatible within an existing LoRaWAN environment as they are marked as proprietary,
