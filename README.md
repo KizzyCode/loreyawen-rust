@@ -44,7 +44,7 @@ different physical networks, as it does not contain any LoRa-specific parts.
 Loreyawen Frame:
 MHDR[1] | DevAddr[4] | FCnt[2] | FPort[1] | Payload[N] | MIC[8]
 
-LoRaWAN Uplink/Downlink Frame as Comparison:
+LoRaWAN Uplink/Downlink Frame as Reference:
 MHDR[1] | DevAddr[4] | FCtrl[1] | FCnt[2] | FOpts[0..15] | FPort[0..1] | Payload[N] | MIC[4]
 ```
 
