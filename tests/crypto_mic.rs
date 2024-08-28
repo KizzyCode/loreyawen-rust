@@ -29,7 +29,7 @@ fn uplink() {
         .compute(b"Test", b"olope");
 
     // Validate MIC
-    assert_eq!(&mic, b"\xB1\xA3\x1A\xA9", "unexpected MIC");
+    assert_eq!(&mic, b"\xB1\xA3\x1A\xA9\xF5\xD3\x3B\xDC", "unexpected MIC");
 }
 
 /// Tests the encryption for downlink frames
@@ -43,5 +43,5 @@ fn downlink() {
         .compute(b"Test", b"olope");
 
     // Validate MIC
-    assert_eq!(&mic, b"\x47\xC2\x4B\x8C", "unexpected MIC");
+    assert_eq!(&mic, b"\x47\xC2\x4B\x8C\x3B\x1D\x20\x26", "unexpected MIC");
 }

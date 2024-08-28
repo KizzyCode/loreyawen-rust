@@ -27,7 +27,10 @@ pub fn uplink() {
         .set_payload(b"Testolope");
 
     // Verify frame and validate session
-    assert_eq!(frame.deref(), b"\xE0\x01\xEF\xBE\xAD\xDE\x00\x00\x7B\xA4\xCB\xEB\x83\x76\x65\x05\x9F\x44\x15\x2B\x37");
+    assert_eq!(
+        frame.deref(),
+        b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x01\x7B\xA4\xCB\xEB\x83\x76\x65\x05\x9F\x8C\x33\xD3\x47\x9B\xAA\xB5\xB5"
+    );
     assert_eq!(session.frame_counter_uplink, 1, "invalid uplink frame counter");
     assert_eq!(session.frame_counter_downlink, 0, "invalid downlink frame counter");
 
@@ -38,7 +41,10 @@ pub fn uplink() {
         .set_payload(b"Testolope");
 
     // Verify frame and validate session
-    assert_eq!(frame.deref(), b"\xE0\x01\xEF\xBE\xAD\xDE\x01\x00\x58\xCA\xD6\xBC\xDE\x59\x37\x74\x78\x44\xB3\x41\x3F");
+    assert_eq!(
+        frame.deref(),
+        b"\xE0\xEF\xBE\xAD\xDE\x01\x00\x01\x58\xCA\xD6\xBC\xDE\x59\x37\x74\x78\xE5\x4B\x62\x64\x06\xF0\x9F\x6D"
+    );
     assert_eq!(session.frame_counter_uplink, 2, "invalid uplink frame counter");
     assert_eq!(session.frame_counter_downlink, 0, "invalid downlink frame counter");
 }
@@ -54,7 +60,10 @@ pub fn downlink() {
         .set_payload(b"Testolope");
 
     // Verify frame and validate session
-    assert_eq!(frame.deref(), b"\xE0\x01\xEF\xBE\xAD\xDE\x00\x00\xEC\x1C\x04\x6C\xC2\x83\x80\x7B\xDF\x61\xFB\x58\x51");
+    assert_eq!(
+        frame.deref(),
+        b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x01\xEC\x1C\x04\x6C\xC2\x83\x80\x7B\xDF\xB9\x9D\x6E\x15\x62\x62\x2D\x1A"
+    );
     assert_eq!(session.frame_counter_uplink, 0, "invalid uplink frame counter");
     assert_eq!(session.frame_counter_downlink, 1, "invalid downlink frame counter");
 
@@ -65,7 +74,10 @@ pub fn downlink() {
         .set_payload(b"Testolope");
 
     // Verify frame and validate session
-    assert_eq!(frame.deref(), b"\xE0\x01\xEF\xBE\xAD\xDE\x01\x00\xD5\xE9\x9F\xB8\x45\xED\x61\x8B\x40\x98\x07\x38\xAF");
+    assert_eq!(
+        frame.deref(),
+        b"\xE0\xEF\xBE\xAD\xDE\x01\x00\x01\xD5\xE9\x9F\xB8\x45\xED\x61\x8B\x40\x50\xCE\xD8\x35\x5D\x85\x74\xD0"
+    );
     assert_eq!(session.frame_counter_uplink, 0, "invalid uplink frame counter");
     assert_eq!(session.frame_counter_downlink, 2, "invalid downlink frame counter");
 }

@@ -17,16 +17,18 @@ pub struct RawFrame {
     /// The amount of bytes within the payload buffer
     payload_len: usize,
     /// The MIC (Message Integrity Code)
-    mic: [u8; 4],
+    mic: [u8; Self::MIC_SIZE],
 }
 impl RawFrame {
     /// The message header byte for our proprietary LoRaWAN frames
     #[allow(clippy::unusual_byte_groupings)]
     const MHDR: u8 = 0b111_000_00;
-    /// The loreyawen version
-    const VERSION: u8 = 0x01;
+    /// The FPort which we (ab)use as version indicator
+    const FPORT: u8 = 0x01;
     /// The header length in bytes
     const HEADER_SIZE: usize = 8;
+    /// The MIC length in bytes
+    const MIC_SIZE: usize = 8;
 
     /// Create a new unitialized frame with only the fixed constants and the given payload set
     ///
@@ -41,23 +43,23 @@ impl RawFrame {
 
         // Return the new frame
         RawFrame {
-            header: [Self::MHDR, Self::VERSION, 0, 0, 0, 0, 0, 0],
+            header: [Self::MHDR, 0, 0, 0, 0, 0, 0, Self::FPORT],
             payload: payload_,
             payload_len: payload.len(),
-            mic: [0; 4],
+            mic: [0; Self::MIC_SIZE],
         }
     }
     /// Parses the frame
     pub fn parse(frame: &[u8]) -> Option<Self> {
         // Split frame
-        let payload_len = frame.len().checked_sub(Self::HEADER_SIZE)?.checked_sub(4)?;
+        let payload_len = frame.len().checked_sub(Self::HEADER_SIZE)?.checked_sub(Self::MIC_SIZE)?;
         let (header, data) = frame.split_at_checked(Self::HEADER_SIZE)?;
         let (payload, mic) = data.split_at_checked(payload_len)?;
 
         // Get header and MIC as arrays and check header
         let header = header.first_chunk()?;
         let mic = mic.first_chunk()?;
-        let _valid_header @ [Self::MHDR, Self::VERSION, _, _, _, _, _, _] = header else {
+        let _valid_header @ [Self::MHDR, _, _, _, _, _, _, Self::FPORT] = header else {
             // The header is unexpected
             return None;
         };
@@ -82,13 +84,13 @@ impl RawFrame {
             // Write header, payload and MIC to the buffer
             buffer[..Self::HEADER_SIZE].copy_from_slice(&self.header);
             buffer[Self::HEADER_SIZE..][..self.payload_len].copy_from_slice(&self.payload[..self.payload_len]);
-            buffer[Self::HEADER_SIZE..][self.payload_len..][..4].copy_from_slice(&self.mic);
+            buffer[Self::HEADER_SIZE..][self.payload_len..][..Self::MIC_SIZE].copy_from_slice(&self.mic);
         }
 
         // Return tuple
         // Note; This should always be smaller than `usize::MAX`
         #[allow(clippy::arithmetic_side_effects)]
-        let frame_length = Self::HEADER_SIZE + self.payload_len + 4;
+        let frame_length = Self::HEADER_SIZE + self.payload_len + Self::MIC_SIZE;
         (buffer, frame_length)
     }
 
@@ -99,26 +101,26 @@ impl RawFrame {
 
     /// The address of the end device associated with the frame
     pub fn address(&self) -> u32 {
-        let [_, _, addr0, addr1, addr2, addr3, _, _] = self.header;
+        let [_, addr0, addr1, addr2, addr3, _, _, _] = self.header;
         u32::from_le_bytes([addr0, addr1, addr2, addr3])
     }
     /// The address of the end device associated with the frame
     pub fn set_address(&mut self, address: u32) {
-        let [mhdr, version, _, _, _, _, fcnt0, fcnt1] = self.header;
+        let [mhdr, _, _, _, _, fcnt0, fcnt1, fport] = self.header;
         let [addr0, addr1, addr2, addr3] = address.to_le_bytes();
-        self.header = [mhdr, version, addr0, addr1, addr2, addr3, fcnt0, fcnt1];
+        self.header = [mhdr, addr0, addr1, addr2, addr3, fcnt0, fcnt1, fport];
     }
 
     /// The least significant bytes of the frame counter
     pub fn frame_counter_lsbs(&self) -> u16 {
-        let [_, _, _, _, _, _, fcnt0, fcnt1] = self.header;
+        let [_, _, _, _, _, fcnt0, fcnt1, _] = self.header;
         u16::from_le_bytes([fcnt0, fcnt1])
     }
     /// Sets the least significant bytes of the frame counter
     pub fn set_frame_counter_lsbs(&mut self, frame_counter_lsbs: u16) {
-        let [mhdr, version, addr0, addr1, addr2, addr3, _, _] = self.header;
+        let [mhdr, addr0, addr1, addr2, addr3, _, _, fport] = self.header;
         let [fcnt0, fcnt1] = frame_counter_lsbs.to_le_bytes();
-        self.header = [mhdr, version, addr0, addr1, addr2, addr3, fcnt0, fcnt1];
+        self.header = [mhdr, addr0, addr1, addr2, addr3, fcnt0, fcnt1, fport];
     }
 
     /// The payload bytes
@@ -139,11 +141,11 @@ impl RawFrame {
     }
 
     /// The MIC bytes
-    pub fn mic(&self) -> &[u8; 4] {
+    pub fn mic(&self) -> &[u8; Self::MIC_SIZE] {
         &self.mic
     }
     /// The MIC bytes
-    pub fn mic_mut(&mut self) -> &mut [u8; 4] {
+    pub fn mic_mut(&mut self) -> &mut [u8; Self::MIC_SIZE] {
         &mut self.mic
     }
 }

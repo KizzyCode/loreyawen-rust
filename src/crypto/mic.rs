@@ -91,7 +91,7 @@ where
     ///
     /// # Panics
     /// This function panics if the total message length is longer than `255` bytes.
-    pub fn compute(self, header: &[u8], payload: &[u8]) -> [u8; 4] {
+    pub fn compute(self, header: &[u8], payload: &[u8]) -> [u8; 8] {
         // Compute and return MIC
         let mac = self.cmac(header, payload).finalize().into_bytes();
         *mac.first_chunk().expect("MAC is too short")
@@ -99,7 +99,7 @@ where
 
     /// Validates the MIC for a given message
     #[must_use]
-    pub fn verify(self, header: &[u8], payload: &[u8], expected_mic: &[u8; 4]) -> bool {
+    pub fn verify(self, header: &[u8], payload: &[u8], expected_mic: &[u8; 8]) -> bool {
         // Ensure the message length is within our constraints
         let total_length = header.len().saturating_add(payload.len());
         let ..=255 = total_length else {
