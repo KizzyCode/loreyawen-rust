@@ -3,7 +3,7 @@
 
 mod session;
 
-use loreyawen::{crypto::aes::Aes128, frame::sealed::FrameBuilder, Direction};
+use loreyawen::{Direction, FrameBuilder};
 use session::MockSession;
 use std::ops::Deref;
 
@@ -21,7 +21,7 @@ pub const SESSION: MockSession = MockSession {
 pub fn uplink() {
     // Seal frame
     let mut session = SESSION;
-    let frame = FrameBuilder::<_, Aes128>::new(&mut session)
+    let frame = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Uplink)
         .set_payload(b"Testolope");
@@ -35,7 +35,7 @@ pub fn uplink() {
     assert_eq!(session.frame_counter_downlink, 0, "invalid downlink frame counter");
 
     // Do a follow-up frame computation to ensure that the updated state is used
-    let frame = FrameBuilder::<_, Aes128>::new(&mut session)
+    let frame = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Uplink)
         .set_payload(b"Testolope");
@@ -54,7 +54,7 @@ pub fn uplink() {
 pub fn downlink() {
     // Seal frame
     let mut session = SESSION;
-    let frame = FrameBuilder::<_, Aes128>::new(&mut session)
+    let frame = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Downlink)
         .set_payload(b"Testolope");
@@ -68,7 +68,7 @@ pub fn downlink() {
     assert_eq!(session.frame_counter_downlink, 1, "invalid downlink frame counter");
 
     // Do a follow-up frame computation to ensure that the updated state is used
-    let frame = FrameBuilder::<_, Aes128>::new(&mut session)
+    let frame = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Downlink)
         .set_payload(b"Testolope");
@@ -90,7 +90,7 @@ pub fn exhausted_frame_counter() {
     session.frame_counter_uplink = 0xFFFF_FFFF;
 
     // Seal frame
-    let _frame = FrameBuilder::<_, Aes128>::new(&mut session)
+    let _frame = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Uplink)
         .set_payload(b"Testolope");
