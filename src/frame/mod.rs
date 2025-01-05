@@ -3,9 +3,9 @@
 pub mod builder;
 pub mod builderopen;
 pub mod builderseal;
-pub mod raw;
+pub mod rawframe;
 
-use crate::frame::raw::RawFrame;
+use crate::frame::rawframe::RawFrame;
 
 /// The maximum message size
 pub const MAX_MESSAGE_SIZE: usize = 255;

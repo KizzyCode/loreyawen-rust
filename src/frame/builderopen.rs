@@ -4,7 +4,7 @@ use crate::crypto::aesctr::AesCtrBuilder;
 use crate::crypto::aescmac::AesCmacBuilder;
 use crate::crypto::Aes128;
 use crate::frame::builder::FrameBuilder;
-use crate::frame::raw::RawFrame;
+use crate::frame::rawframe::RawFrame;
 use crate::frame::MAX_PAYLOAD_SIZE;
 use crate::{Direction, SessionState};
 use core::marker::PhantomData;

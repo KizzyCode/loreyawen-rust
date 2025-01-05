@@ -2,7 +2,7 @@
 
 use crate::crypto::cipher::generic_array::GenericArray;
 use crate::crypto::Aes128;
-use crate::frame::raw::RawFrame;
+use crate::frame::rawframe::RawFrame;
 use crate::Direction;
 use cmac::{Cmac, Mac};
 use core::fmt::Debug;
