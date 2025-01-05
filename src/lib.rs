@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 #![no_std]
-// Clippy lints
+// Linter warnings
 #![warn(clippy::large_stack_arrays)]
 #![warn(clippy::arithmetic_side_effects)]
 #![warn(clippy::unwrap_used)]
@@ -12,6 +12,8 @@
 #![warn(clippy::missing_panics_doc)]
 #![warn(clippy::allow_attributes_without_reason)]
 #![warn(clippy::cognitive_complexity)]
+// Linter allowances
+#![allow(non_contiguous_range_endpoints, reason = "This lint is stupid")]
 
 pub mod crypto;
 pub mod frame;
@@ -41,10 +43,5 @@ pub trait SessionState {
     fn set_frame_counter(&mut self, counter: u32, direction: Direction);
 }
 
-/// A builder to validate and decrypt a sealed frame into a plaintext
-#[cfg(feature = "aes")]
-pub type PlaintextBuilder<Session> = crate::frame::plaintext::PlaintextBuilder<Session, aes::Aes128>;
-
-/// A builder to encrypt and seal a plaintext into a sealed frame
-#[cfg(feature = "aes")]
-pub type FrameBuilder<Session> = crate::frame::sealed::FrameBuilder<Session, aes::Aes128>;
+// Re-export entry types
+pub use crate::frame::builder::FrameBuilder;

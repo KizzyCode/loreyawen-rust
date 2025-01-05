@@ -16,8 +16,9 @@ appveyor = { repository = "KizzyCode/loreyawen-rust" }
 
 
 [features]
-default = ["aes"]
+default = ["aes", "extended-mic"]
 aes = ["dep:aes"]
+extended-mic = []
 
 
 [dependencies]

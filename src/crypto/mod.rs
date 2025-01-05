@@ -1,15 +1,15 @@
 //! Cryptographic primitives for Loreyawen frame encryption
 
-pub mod mic;
-pub mod stream;
+pub mod aescmac;
+pub mod aesctr;
 
 // Re-export the basic `cipher`-crate as its traits are used in public APIs
-pub use cipher;
 // Re-export the `aes`-crate if the feature is enabled
 #[cfg(feature = "aes")]
 pub use aes;
-
-use cipher::{generic_array::typenum::U16, BlockCipher, BlockEncrypt, KeyInit};
+pub use cipher;
+use cipher::generic_array::typenum::U16;
+use cipher::{BlockCipher, BlockEncrypt, KeyInit};
 
 /// A marker trait for a raw AES-128 implementations
 ///

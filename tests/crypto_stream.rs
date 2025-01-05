@@ -3,10 +3,9 @@
 
 mod session;
 
-use loreyawen::{
-    crypto::{aes::Aes128, stream::CipherstreamBuilder},
-    Direction,
-};
+use loreyawen::crypto::aes::Aes128;
+use loreyawen::crypto::aesctr::AesCtrBuilder;
+use loreyawen::Direction;
 use session::MockSession;
 
 /// The mock session to use in the tests
@@ -23,7 +22,7 @@ pub const SESSION: MockSession = MockSession {
 fn uplink() {
     // Test uplink
     let mut data = *b"Testolope";
-    CipherstreamBuilder::<Aes128>::new(&SESSION.appskey)
+    AesCtrBuilder::new::<Aes128>(&SESSION.appskey)
         .set_direction(Direction::Uplink)
         .set_address(SESSION.device_address)
         .set_frame_counter(SESSION.frame_counter_uplink)
@@ -38,7 +37,7 @@ fn uplink() {
 fn downlink() {
     // Test downlink
     let mut data = *b"Testolope";
-    CipherstreamBuilder::<Aes128>::new(&SESSION.appskey)
+    AesCtrBuilder::new::<Aes128>(&SESSION.appskey)
         .set_direction(Direction::Downlink)
         .set_address(SESSION.device_address)
         .set_frame_counter(SESSION.frame_counter_uplink)

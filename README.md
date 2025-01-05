@@ -22,35 +22,37 @@ This implementation assumes that a unique and random `appskey` and `nwkskey` are
 secure fashion. Those keys are used to encrypt and authenticate messages in an "accidentally" LoRaWAN compatible way;
 however it does not implement any other LoRaWAN semantics like media access control or session rekeying/reset.
 
-This means, `loreyawan` is _not_ affected by the higher-level LoRaWAN security vulnerabilities during session
-setup/reset etc. Meanwhile, LoRaWAN's basic link-layer as implemented by this crate is considered reasonably secure in
-low-datarate networks. Also, `loreyawen` truncates the MIC to 64 bit instead of just 32 bit, as the security benefit is
-significant, and the overhead is negligible in practice.
+This means, `loreyawan` is _not_ affected by the common LoRaWAN security vulnerabilities. LoRaWAN's basic link-layer, as implemented by this crate, is a pretty simple packetcounter-encrypt-mac scheme, which is considered reasonably secure.
+Also, `loreyawen` optionally truncates the MIC to 64 bit instead of just 32 bit, as the security benefit might be
+significant, and the overhead is usually negligible.
 
-Furthermore, this this crate can actually be used completely indepently of an existing LoRaWAN session or LoRa(WAN) at
-all: once the keys are deployed, it can be just used as-is to provide an encrypted link between a server and an
-end-device, without any higher level LoRaWAN logic and vulnerabilities. `loreyawen` can even be used with completely
-different physical networks, as it does not contain any LoRa-specific parts.
+
+## Dependency and Interoperability with LoRa(WAN)
+`loreyawen` frames are marked as proprietary LoRaWAN frames, which indicates to the receiver that this are not standard
+frames. Compliant receivers should recognize this and treat the frames accordingly.
+
+While `loreyawen` masquerades as LoRaWAN proprietary frames, it can actually be used completely indepently of an
+existing LoRaWAN session or LoRa(WAN) at all. Once the keys are deployed, it can be just used as-is to provide an
+encrypted link between server and end-device, without any higher level LoRaWAN logic and associated vulnerabilities.
+`loreyawen` can even be used with completely different physical networks, since it does not rely on any LoRa-specific
+parts.
 
 
 ## Frame Format and Deviations from LoRaWAN Uplink/Downlink Frames
 `loreyawen` uses a LoRaWAN-proprietary frame format, with the following fields:
 - 1 byte `MHDR`, fixed to `0b111_000_00` (indicates a "proprietary" frame for LoRaWAN version 1.0)
-- 7 bytes `FHDR`, consisting of 4 bytes `DevAddr`, 2 bytes `FCnt`, and 1 byte `FPort`
-- N bytes payload
-- 8 bytes `MIC` (which is just a less-truncated version of the default LoRaWAN MIC)
+- 8 bytes `FHDR`, consisting of 4 bytes `DevAddr`, 1 byte `FCtrl`, 2 bytes `FCnt`, and 1 byte `FPort`
+- N bytes encrypted payload
+- 4 or 8 bytes `MIC` (which is just a less-truncated version of the default LoRaWAN MIC)
 
 ```ascii
 Loreyawen Frame:
-MHDR[1] | DevAddr[4] | FCnt[2] | FPort[1] | Payload[N] | MIC[8]
+MHDR[1] | DevAddr[4] | FCtrl[1] | FCnt[2] |     FOpts[0] |    FPort[1] | Payload[N] | MIC[4 or 8]
 
 LoRaWAN Uplink/Downlink Frame as Reference:
 MHDR[1] | DevAddr[4] | FCtrl[1] | FCnt[2] | FOpts[0..15] | FPort[0..1] | Payload[N] | MIC[4]
 ```
 
-This format is pretty similar to the regular uplink/downlink frames. The unused `FCtrl` and `FOpts` fields are ommitted,
-and we use the `FPort` field to indicate the protocol version (`0x01` for this version). Also, the MIC is truncated to
-64 bit, not just 32 bit as in default LoRaWAN.
-
-The resulting frames should be compatible within an existing LoRaWAN environment as they are marked as proprietary,
-indicating they are not standard frames and the subsequent fields must be treated specially.
+This format is pretty similar to the regular uplink/downlink frames. The `FOpts` field is always ommitted, while the
+`FCtrl` and `FPort` field can be used to transmit application specific plaintext values. If the `extended-mic` feature
+is enabled, the MIC is truncated to 64 bit, instead of the 32 bit from default LoRaWAN.

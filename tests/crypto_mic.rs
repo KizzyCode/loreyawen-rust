@@ -1,12 +1,12 @@
 //! Tests the cipher stream implementation
 #![cfg(feature = "aes")]
+#![cfg(feature = "extended-mic")]
 
 mod session;
 
-use loreyawen::{
-    crypto::{aes::Aes128, mic::MicBuilder},
-    Direction,
-};
+use loreyawen::crypto::aes::Aes128;
+use loreyawen::crypto::aescmac::AesCmacBuilder;
+use loreyawen::Direction;
 use session::MockSession;
 
 /// The mock session to use in the tests
@@ -22,7 +22,7 @@ pub const SESSION: MockSession = MockSession {
 #[test]
 fn uplink() {
     // Test uplink
-    let mic = MicBuilder::<Aes128>::new(&SESSION.appskey)
+    let mic = AesCmacBuilder::new::<Aes128>(&SESSION.appskey)
         .set_direction(Direction::Uplink)
         .set_address(SESSION.device_address)
         .set_frame_counter(SESSION.frame_counter_uplink)
@@ -36,7 +36,7 @@ fn uplink() {
 #[test]
 fn downlink() {
     // Test downlink
-    let mic = MicBuilder::<Aes128>::new(&SESSION.appskey)
+    let mic = AesCmacBuilder::new::<Aes128>(&SESSION.appskey)
         .set_direction(Direction::Downlink)
         .set_address(SESSION.device_address)
         .set_frame_counter(SESSION.frame_counter_uplink)

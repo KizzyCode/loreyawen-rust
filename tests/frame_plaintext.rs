@@ -1,9 +1,10 @@
 //! Tests opening sealed frames
 #![cfg(feature = "aes")]
+#![cfg(feature = "extended-mic")]
 
 mod session;
 
-use loreyawen::{Direction, PlaintextBuilder};
+use loreyawen::{Direction, FrameBuilder};
 use session::MockSession;
 use std::ops::Deref;
 
@@ -21,10 +22,10 @@ pub const SESSION: MockSession = MockSession {
 pub fn uplink() {
     // Open frame
     let mut session = SESSION;
-    let plaintext = PlaintextBuilder::new(&mut session)
+    let plaintext = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Uplink)
-        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x01\x7B\xA4\xCB\xEB\x83\x76\x65\x05\x9F\x8C\x33\xD3\x47\x9B\xAA\xB5\xB5")
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x00\x00\x7B\xA4\xCB\xEB\x83\x76\x65\x05\x9F\x21\x51\x4A\x21\x25\x19\x9A\x79")
         .expect("unexpected invalid frame")
         .unpack()
         .expect("unexpected failure when unpacking frame");
@@ -35,10 +36,10 @@ pub fn uplink() {
     assert_eq!(session.frame_counter_downlink, 0, "invalid downlink frame counter");
 
     // Do a follow-up frame computation to ensure that the updated state is used
-    let plaintext = PlaintextBuilder::new(&mut session)
+    let plaintext = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Uplink)
-        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x01\x00\x01\x58\xCA\xD6\xBC\xDE\x59\x37\x74\x78\xE5\x4B\x62\x64\x06\xF0\x9F\x6D")
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x01\x00\x00\x58\xCA\xD6\xBC\xDE\x59\x37\x74\x78\x95\xD6\xC5\x2C\xCA\x8E\x4B\x67")
         .expect("unexpected invalid frame")
         .unpack()
         .expect("unexpected failure when unpacking frame");
@@ -49,11 +50,11 @@ pub fn uplink() {
     assert_eq!(session.frame_counter_downlink, 0, "invalid downlink frame counter");
 
     // Uplink with overflow
-    let plaintext = PlaintextBuilder::new(&mut session)
+    let plaintext = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Uplink)
         // Frame has been sealed with frame counter `0x0001_0000`
-        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x01\xF2\x1A\x03\xEE\xF9\xF5\x2C\xF7\x8A\xCB\x59\x41\x58\x71\x99\x4A\x9C")
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x00\x00\xF2\x1A\x03\xEE\xF9\xF5\x2C\xF7\x8A\xF5\x9B\xCD\x5C\x67\x04\x97\x6C")
         .expect("unexpected invalid frame")
         .unpack()
         .expect("unexpected failure when unpacking frame");
@@ -69,10 +70,10 @@ pub fn uplink() {
 pub fn downlink() {
     // Seal frame
     let mut session = SESSION;
-    let plaintext = PlaintextBuilder::new(&mut session)
+    let plaintext = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Downlink)
-        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x01\xEC\x1C\x04\x6C\xC2\x83\x80\x7B\xDF\xB9\x9D\x6E\x15\x62\x62\x2D\x1A")
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x00\x00\xEC\x1C\x04\x6C\xC2\x83\x80\x7B\xDF\x0A\x06\x9D\x4F\x1B\xFE\x65\x4C")
         .expect("unexpected invalid frame")
         .unpack()
         .expect("unexpected failure when unpacking frame");
@@ -83,10 +84,10 @@ pub fn downlink() {
     assert_eq!(session.frame_counter_downlink, 1, "invalid downlink frame counter");
 
     // Do a follow-up frame computation to ensure that the updated state is used
-    let plaintext = PlaintextBuilder::new(&mut session)
+    let plaintext = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Downlink)
-        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x01\x00\x01\xD5\xE9\x9F\xB8\x45\xED\x61\x8B\x40\x50\xCE\xD8\x35\x5D\x85\x74\xD0")
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x01\x00\x00\xD5\xE9\x9F\xB8\x45\xED\x61\x8B\x40\x55\xE7\x47\x31\xC5\x25\x7F\xA0")
         .expect("unexpected invalid frame")
         .unpack()
         .expect("unexpected failure when unpacking frame");
@@ -97,11 +98,11 @@ pub fn downlink() {
     assert_eq!(session.frame_counter_downlink, 2, "invalid downlink frame counter");
 
     // Downlink with overflow
-    let plaintext = PlaintextBuilder::new(&mut session)
+    let plaintext = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Downlink)
         // Frame has been sealed with frame counter `0x0001_0000`
-        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x01\xE3\xB3\x43\x5D\x93\xB9\x3A\x8F\x88\xB2\x54\x8E\x9F\xDA\xF4\x74\x95")
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x00\x00\xE3\xB3\x43\x5D\x93\xB9\x3A\x8F\x88\x63\x01\xD4\x89\xA1\x4C\x13\x76")
         .expect("unexpected invalid frame")
         .unpack()
         .expect("unexpected failure when unpacking frame");
@@ -117,10 +118,10 @@ pub fn downlink() {
 pub fn generic_invalid_format() {
     // Open invalid uplink frame
     let mut session = SESSION;
-    let maybe_plaintext_builder = PlaintextBuilder::new(&mut session)
+    let maybe_plaintext_builder = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Uplink)
-        .set_frame(b"\xA0\xEF\xBE\xAD\xDE\x00\x00\x01\x7B\xA4\xCB\xEB\x83\x76\x65\x05\x9F\x8C\x33\xD3\x47\x9B\xAA\xB5\xB5");
+        .set_frame(b"\xA0\xEF\xBE\xAD\xDE\x00\x00\x00\x00\x7B\xA4\xCB\xEB\x83\x76\x65\x05\x9F\x21\x51\x4A\x21\x25\x19\x9A\x79");
     assert!(maybe_plaintext_builder.is_none(), "unexpected success when unpacking plaintext");
 }
 
@@ -129,19 +130,19 @@ pub fn generic_invalid_format() {
 pub fn uplink_downlink_tampered_data() {
     // Open invalid uplink frame
     let mut session = SESSION;
-    let maybe_plaintext = PlaintextBuilder::new(&mut session)
+    let maybe_plaintext = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Uplink)
-        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x01\x7B\xA4\xCB\xEB\x83\x76\x65\x05\x9E\x8C\x33\xD3\x47\x9B\xAA\xB5\xB5")
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x01\x00\x00\x00\x7B\xA4\xCB\xEB\x83\x76\x65\x05\x9F\x21\x51\x4A\x21\x25\x19\x9A\x79")
         .expect("unexpected invalid frame")
         .unpack();
     assert!(maybe_plaintext.is_none(), "unexpected success when unpacking plaintext");
 
     // Open invalid downlink frame
-    let maybe_plaintext = PlaintextBuilder::new(&mut session)
+    let maybe_plaintext = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Downlink)
-        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x01\xEC\x1C\x04\x6C\xC2\x83\x80\x7B\xDE\xB9\x9D\x6E\x15\x62\x62\x2D\x1A")
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x01\x00\x00\x00\xEC\x1C\x04\x6C\xC2\x83\x80\x7B\xDF\x0A\x06\x9D\x4F\x1B\xFE\x65\x4C")
         .expect("unexpected invalid frame")
         .unpack();
     assert!(maybe_plaintext.is_none(), "unexpected success when unpacking plaintext");
@@ -156,19 +157,19 @@ pub fn generic_outdated_counter() {
     session.frame_counter_downlink = 1;
 
     // Open invalid uplink frame
-    let maybe_plaintext = PlaintextBuilder::new(&mut session)
+    let maybe_plaintext = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Uplink)
-        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x01\x7B\xA4\xCB\xEB\x83\x76\x65\x05\x9F\x8C\x33\xD3\x47\x9B\xAA\xB5\xB5")
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x00\x00\x7B\xA4\xCB\xEB\x83\x76\x65\x05\x9F\x21\x51\x4A\x21\x25\x19\x9A\x79")
         .expect("unexpected invalid frame")
         .unpack();
     assert!(maybe_plaintext.is_none(), "unexpected success when unpacking plaintext");
 
     // Open invalid downlink frame
-    let maybe_plaintext = PlaintextBuilder::new(&mut session)
+    let maybe_plaintext = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Downlink)
-        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x01\xEC\x1C\x04\x6C\xC2\x83\x80\x7B\xDF\xB9\x9D\x6E\x15\x62\x62\x2D\x1A")
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x00\x00\xEC\x1C\x04\x6C\xC2\x83\x80\x7B\xDF\x0A\x06\x9D\x4F\x1B\xFE\x65\x4C")
         .expect("unexpected invalid frame")
         .unpack();
     assert!(maybe_plaintext.is_none(), "unexpected success when unpacking plaintext");
@@ -183,19 +184,19 @@ pub fn generic_invalid_counter() {
     session.frame_counter_downlink = 0xFFFF_FFFF;
 
     // Open invalid uplink frame
-    let maybe_plaintext = PlaintextBuilder::new(&mut session)
+    let maybe_plaintext = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Uplink)
-        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\xFF\xFF\x01\x95\xDD\x21\xA5\x48\x3A\xDE\x18\x40\x65\x6A\xCB\x14\xBB\xF4\xBF\x72")
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\xFF\xFF\x00\x95\xDD\x21\xA5\x48\x3A\xDE\x18\x40\xE2\x85\xEE\x8E\xF6\x12\xD4\xF8")
         .expect("unexpected invalid frame")
         .unpack();
     assert!(maybe_plaintext.is_none(), "unexpected success when unpacking plaintext");
 
     // Open invalid downlink frame
-    let maybe_plaintext = PlaintextBuilder::new(&mut session)
+    let maybe_plaintext = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Downlink)
-        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\xFF\xFF\x01\x17\xA8\xE1\x3C\xA6\xD9\xDB\x87\xA6\xF6\x1F\xF6\xF6\x0E\x06\xB9\xB1")
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\xFF\xFF\x00\x17\xA8\xE1\x3C\xA6\xD9\xDB\x87\xA6\x2A\x75\x96\x37\xED\x16\x95\xF2")
         .expect("unexpected invalid frame")
         .unpack();
     assert!(maybe_plaintext.is_none(), "unexpected success when unpacking plaintext");
@@ -206,19 +207,19 @@ pub fn generic_invalid_counter() {
 pub fn uplink_downlink_invalid_direction() {
     // Open invalid uplink frame
     let mut session = SESSION;
-    let maybe_plaintext = PlaintextBuilder::new(&mut session)
+    let maybe_plaintext = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Downlink)
-        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x01\x7B\xA4\xCB\xEB\x83\x76\x65\x05\x9F\x8C\x33\xD3\x47\x9B\xAA\xB5\xB5")
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x00\x00\x7B\xA4\xCB\xEB\x83\x76\x65\x05\x9F\x21\x51\x4A\x21\x25\x19\x9A\x79")
         .expect("unexpected invalid frame")
         .unpack();
     assert!(maybe_plaintext.is_none(), "unexpected success when unpacking plaintext");
 
     // Open invalid downlink frame
-    let maybe_plaintext = PlaintextBuilder::new(&mut session)
+    let maybe_plaintext = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Uplink)
-        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x01\xEC\x1C\x04\x6C\xC2\x83\x80\x7B\xDF\xB9\x9D\x6E\x15\x62\x62\x2D\x1A")
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x00\x00\xEC\x1C\x04\x6C\xC2\x83\x80\x7B\xDF\x0A\x06\x9D\x4F\x1B\xFE\x65\x4C")
         .expect("unexpected invalid frame")
         .unpack();
     assert!(maybe_plaintext.is_none(), "unexpected success when unpacking plaintext");
@@ -232,19 +233,19 @@ pub fn generic_invalid_address() {
     session.device_address = 0xCAFEBEEF;
 
     // Open invalid uplink frame
-    let maybe_plaintext = PlaintextBuilder::new(&mut session)
+    let maybe_plaintext = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Uplink)
-        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x01\x7B\xA4\xCB\xEB\x83\x76\x65\x05\x9F\x8C\x33\xD3\x47\x9B\xAA\xB5\xB5")
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x00\x00\x7B\xA4\xCB\xEB\x83\x76\x65\x05\x9F\x21\x51\x4A\x21\x25\x19\x9A\x79")
         .expect("unexpected invalid frame")
         .unpack();
     assert!(maybe_plaintext.is_none(), "unexpected success when unpacking plaintext");
 
     // Open invalid downlink frame
-    let maybe_plaintext = PlaintextBuilder::new(&mut session)
+    let maybe_plaintext = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Downlink)
-        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x01\xEC\x1C\x04\x6C\xC2\x83\x80\x7B\xDF\xB9\x9D\x6E\x15\x62\x62\x2D\x1A")
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x00\x00\xEC\x1C\x04\x6C\xC2\x83\x80\x7B\xDF\x0A\x06\x9D\x4F\x1B\xFE\x65\x4C")
         .expect("unexpected invalid frame")
         .unpack();
     assert!(maybe_plaintext.is_none(), "unexpected success when unpacking plaintext");

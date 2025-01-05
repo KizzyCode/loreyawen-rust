@@ -1,5 +1,6 @@
 //! Tests creating sealed frames
 #![cfg(feature = "aes")]
+#![cfg(feature = "extended-mic")]
 
 mod session;
 
@@ -24,12 +25,13 @@ pub fn uplink() {
     let frame = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Uplink)
-        .set_payload(b"Testolope");
+        .set_plaintext(b"Testolope")
+        .pack();
 
     // Verify frame and validate session
     assert_eq!(
         frame.deref(),
-        b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x01\x7B\xA4\xCB\xEB\x83\x76\x65\x05\x9F\x8C\x33\xD3\x47\x9B\xAA\xB5\xB5"
+        b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x00\x00\x7B\xA4\xCB\xEB\x83\x76\x65\x05\x9F\x21\x51\x4A\x21\x25\x19\x9A\x79"
     );
     assert_eq!(session.frame_counter_uplink, 1, "invalid uplink frame counter");
     assert_eq!(session.frame_counter_downlink, 0, "invalid downlink frame counter");
@@ -38,12 +40,13 @@ pub fn uplink() {
     let frame = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Uplink)
-        .set_payload(b"Testolope");
+        .set_plaintext(b"Testolope")
+        .pack();
 
     // Verify frame and validate session
     assert_eq!(
         frame.deref(),
-        b"\xE0\xEF\xBE\xAD\xDE\x01\x00\x01\x58\xCA\xD6\xBC\xDE\x59\x37\x74\x78\xE5\x4B\x62\x64\x06\xF0\x9F\x6D"
+        b"\xE0\xEF\xBE\xAD\xDE\x00\x01\x00\x00\x58\xCA\xD6\xBC\xDE\x59\x37\x74\x78\x95\xD6\xC5\x2C\xCA\x8E\x4B\x67"
     );
     assert_eq!(session.frame_counter_uplink, 2, "invalid uplink frame counter");
     assert_eq!(session.frame_counter_downlink, 0, "invalid downlink frame counter");
@@ -57,12 +60,13 @@ pub fn downlink() {
     let frame = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Downlink)
-        .set_payload(b"Testolope");
+        .set_plaintext(b"Testolope")
+        .pack();
 
     // Verify frame and validate session
     assert_eq!(
         frame.deref(),
-        b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x01\xEC\x1C\x04\x6C\xC2\x83\x80\x7B\xDF\xB9\x9D\x6E\x15\x62\x62\x2D\x1A"
+        b"\xE0\xEF\xBE\xAD\xDE\x00\x00\x00\x00\xEC\x1C\x04\x6C\xC2\x83\x80\x7B\xDF\x0A\x06\x9D\x4F\x1B\xFE\x65\x4C"
     );
     assert_eq!(session.frame_counter_uplink, 0, "invalid uplink frame counter");
     assert_eq!(session.frame_counter_downlink, 1, "invalid downlink frame counter");
@@ -71,12 +75,13 @@ pub fn downlink() {
     let frame = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Downlink)
-        .set_payload(b"Testolope");
+        .set_plaintext(b"Testolope")
+        .pack();
 
     // Verify frame and validate session
     assert_eq!(
         frame.deref(),
-        b"\xE0\xEF\xBE\xAD\xDE\x01\x00\x01\xD5\xE9\x9F\xB8\x45\xED\x61\x8B\x40\x50\xCE\xD8\x35\x5D\x85\x74\xD0"
+        b"\xE0\xEF\xBE\xAD\xDE\x00\x01\x00\x00\xD5\xE9\x9F\xB8\x45\xED\x61\x8B\x40\x55\xE7\x47\x31\xC5\x25\x7F\xA0"
     );
     assert_eq!(session.frame_counter_uplink, 0, "invalid uplink frame counter");
     assert_eq!(session.frame_counter_downlink, 2, "invalid downlink frame counter");
@@ -93,5 +98,6 @@ pub fn exhausted_frame_counter() {
     let _frame = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Uplink)
-        .set_payload(b"Testolope");
+        .set_plaintext(b"Testolope")
+        .pack();
 }

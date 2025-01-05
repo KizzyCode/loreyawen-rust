@@ -21,14 +21,15 @@ pub struct RawFrame {
 }
 impl RawFrame {
     /// The message header byte for our proprietary LoRaWAN frames
-    #[allow(clippy::unusual_byte_groupings)]
+    #[allow(clippy::unusual_byte_groupings, reason = "Uses the message header grouping")]
     const MHDR: u8 = 0b111_000_00;
-    /// The FPort which we (ab)use as version indicator
-    const FPORT: u8 = 0x01;
     /// The header length in bytes
-    const HEADER_SIZE: usize = 8;
+    pub const HEADER_SIZE: usize = 9;
     /// The MIC length in bytes
-    const MIC_SIZE: usize = 8;
+    pub const MIC_SIZE: usize = match cfg!(feature = "extended-mic") {
+        true => 8,
+        false => 4,
+    };
 
     /// Create a new unitialized frame with only the fixed constants and the given payload set
     ///
@@ -43,7 +44,7 @@ impl RawFrame {
 
         // Return the new frame
         RawFrame {
-            header: [Self::MHDR, 0, 0, 0, 0, 0, 0, Self::FPORT],
+            header: [Self::MHDR, 0, 0, 0, 0, 0, 0, 0, 0],
             payload: payload_,
             payload_len: payload.len(),
             mic: [0; Self::MIC_SIZE],
@@ -59,7 +60,7 @@ impl RawFrame {
         // Get header and MIC as arrays and check header
         let header = header.first_chunk()?;
         let mic = mic.first_chunk()?;
-        let _valid_header @ [Self::MHDR, _, _, _, _, _, _, Self::FPORT] = header else {
+        let _valid_header @ [Self::MHDR, _, _, _, _, _, _, _, _] = header else {
             // The header is unexpected
             return None;
         };
@@ -79,7 +80,7 @@ impl RawFrame {
 
         // Serialize the frame
         // Note: The buffer should always be able to hold the entire frame
-        #[allow(clippy::indexing_slicing)]
+        #[allow(clippy::indexing_slicing, reason = "Lengths should always be valid")]
         {
             // Write header, payload and MIC to the buffer
             buffer[..Self::HEADER_SIZE].copy_from_slice(&self.header);
@@ -89,7 +90,7 @@ impl RawFrame {
 
         // Return tuple
         // Note; This should always be smaller than `usize::MAX`
-        #[allow(clippy::arithmetic_side_effects)]
+        #[allow(clippy::arithmetic_side_effects, reason = "This should never overflow")]
         let frame_length = Self::HEADER_SIZE + self.payload_len + Self::MIC_SIZE;
         (buffer, frame_length)
     }
@@ -101,38 +102,60 @@ impl RawFrame {
 
     /// The address of the end device associated with the frame
     pub fn address(&self) -> u32 {
-        let [_, addr0, addr1, addr2, addr3, _, _, _] = self.header;
+        let [_, addr0, addr1, addr2, addr3, _, _, _, _] = self.header;
         u32::from_le_bytes([addr0, addr1, addr2, addr3])
     }
     /// The address of the end device associated with the frame
     pub fn set_address(&mut self, address: u32) {
-        let [mhdr, _, _, _, _, fcnt0, fcnt1, fport] = self.header;
+        let [mhdr, _, _, _, _, fctrl, fcnt0, fcnt1, fport] = self.header;
         let [addr0, addr1, addr2, addr3] = address.to_le_bytes();
-        self.header = [mhdr, addr0, addr1, addr2, addr3, fcnt0, fcnt1, fport];
+        self.header = [mhdr, addr0, addr1, addr2, addr3, fctrl, fcnt0, fcnt1, fport];
     }
 
     /// The least significant bytes of the frame counter
     pub fn frame_counter_lsbs(&self) -> u16 {
-        let [_, _, _, _, _, fcnt0, fcnt1, _] = self.header;
+        let [_, _, _, _, _, _, fcnt0, fcnt1, _] = self.header;
         u16::from_le_bytes([fcnt0, fcnt1])
     }
     /// Sets the least significant bytes of the frame counter
     pub fn set_frame_counter_lsbs(&mut self, frame_counter_lsbs: u16) {
-        let [mhdr, addr0, addr1, addr2, addr3, _, _, fport] = self.header;
+        let [mhdr, addr0, addr1, addr2, addr3, fctrl, _, _, fport] = self.header;
         let [fcnt0, fcnt1] = frame_counter_lsbs.to_le_bytes();
-        self.header = [mhdr, addr0, addr1, addr2, addr3, fcnt0, fcnt1, fport];
+        self.header = [mhdr, addr0, addr1, addr2, addr3, fctrl, fcnt0, fcnt1, fport];
+    }
+
+    /// Gets the `FCtrl` byte
+    pub fn frame_ctrl(&self) -> u8 {
+        let [_, _, _, _, _, fctrl, _, _, _] = self.header;
+        fctrl
+    }
+    /// Sets the `FCtrl` byte
+    pub fn set_frame_ctrl(&mut self, frame_ctrl: u8) {
+        let [mhdr, addr0, addr1, addr2, addr3, _, fcnt0, fcnt1, fport] = self.header;
+        self.header = [mhdr, addr0, addr1, addr2, addr3, frame_ctrl, fcnt0, fcnt1, fport];
+    }
+
+    /// Gets the `FPort` byte
+    pub fn frame_port(&self) -> u8 {
+        let [_, _, _, _, _, _, _, _, fport] = self.header;
+        fport
+    }
+    /// Sets the `FCtrl` byte
+    pub fn set_frame_port(&mut self, frame_port: u8) {
+        let [mhdr, addr0, addr1, addr2, addr3, fctrl, fcnt0, fcnt1, _] = self.header;
+        self.header = [mhdr, addr0, addr1, addr2, addr3, fctrl, fcnt0, fcnt1, frame_port];
     }
 
     /// The payload bytes
     pub fn payload(&self) -> &[u8] {
         // Note: The payload length is assumed to be valid here
-        #[allow(clippy::indexing_slicing)]
+        #[allow(clippy::indexing_slicing, reason = "Length should always be valid")]
         &self.payload[..self.payload_len]
     }
     /// The payload bytes
     pub fn payload_mut(&mut self) -> &mut [u8] {
         // Note: The payload length is assumed to be valid here
-        #[allow(clippy::indexing_slicing)]
+        #[allow(clippy::indexing_slicing, reason = "Length should always be valid")]
         &mut self.payload[..self.payload_len]
     }
     /// Returns the payload as a tuple with the buffer and the amount of bytes in there (aka payload length)
