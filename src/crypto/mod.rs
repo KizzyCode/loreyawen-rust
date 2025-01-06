@@ -3,10 +3,10 @@
 pub mod aescmac;
 pub mod aesctr;
 
-// Re-export the basic `cipher`-crate as its traits are used in public APIs
 // Re-export the `aes`-crate if the feature is enabled
 #[cfg(feature = "aes")]
 pub use aes;
+// Re-export the basic `cipher`-crate as its traits are used in public APIs
 pub use cipher;
 use cipher::generic_array::typenum::U16;
 use cipher::{BlockCipher, BlockEncrypt, KeyInit};

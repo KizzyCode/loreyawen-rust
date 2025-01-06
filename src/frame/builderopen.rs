@@ -1,7 +1,7 @@
 //! `FrameBuilder` transisions to validate and decrypt a sealed frame into a plaintext
 
-use crate::crypto::aesctr::AesCtrBuilder;
 use crate::crypto::aescmac::AesCmacBuilder;
+use crate::crypto::aesctr::AesCtrBuilder;
 use crate::crypto::Aes128;
 use crate::frame::builder::FrameBuilder;
 use crate::frame::rawframe::RawFrame;
@@ -9,6 +9,13 @@ use crate::frame::MAX_PAYLOAD_SIZE;
 use crate::{Direction, SessionState};
 use core::marker::PhantomData;
 use core::ops::Deref;
+
+/// A sealed intermediate frame
+#[derive(Debug, Clone, Copy)]
+pub struct SealedFrame {
+    /// The underlying raw frame
+    raw: RawFrame,
+}
 
 /// The decrypted frame
 #[derive(Debug, Clone, Copy)]
@@ -28,13 +35,17 @@ pub struct PlaintextFrame {
 // Implement decryption logic
 impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction> {
     /// Parses a raw frame
-    pub fn set_frame(self, frame: &[u8]) -> Option<FrameBuilder<PhantomData<Aes>, Session, Direction, RawFrame>> {
-        let frame = RawFrame::parse(frame)?;
+    pub fn set_frame(self, frame: &[u8]) -> Option<FrameBuilder<PhantomData<Aes>, Session, Direction, SealedFrame>> {
+        // Parse frame
+        let raw = RawFrame::parse(frame)?;
+        let frame = SealedFrame { raw };
+
+        // Init next step
         let Self { aes, session, direction, .. } = self;
         Some(FrameBuilder { aes, session, direction, state: frame })
     }
 }
-impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction, RawFrame> {
+impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction, SealedFrame> {
     /// This is a reserved frame counter that must not be used by frames, so implementations can use it as marker value
     /// to e.g. mark a session as exhausted
     ///
@@ -61,7 +72,7 @@ impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction, RawFrame> 
     {
         // Validate address
         let device_address = self.session.device_address();
-        let true = self.state.address() == device_address else {
+        let true = self.state.raw.address() == device_address else {
             // Apparently the message is not for us
             return None;
         };
@@ -70,7 +81,7 @@ impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction, RawFrame> 
         let maybe_frame_counter = {
             // Recover the most-likely frame counter relative to the session state
             let next_frame_counter = self.session.frame_counter(self.direction);
-            let frame_counter_lsbs = self.state.frame_counter_lsbs();
+            let frame_counter_lsbs = self.state.raw.frame_counter_lsbs();
             Self::recover_frame_counter(frame_counter_lsbs, next_frame_counter)
         };
         let frame_counter @ ..Self::RESERVED_FRAME_COUNTER = maybe_frame_counter else {
@@ -82,9 +93,9 @@ impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction, RawFrame> 
         let nwkskey = self.session.nwkskey();
         let mic_valid = AesCmacBuilder::new::<Aes>(nwkskey)
             .set_direction(self.direction)
-            .set_address(self.state.address())
+            .set_address(self.state.raw.address())
             .set_frame_counter(frame_counter)
-            .verify(self.state.header(), self.state.payload(), self.state.mic());
+            .verify(self.state.raw.header(), self.state.raw.payload(), self.state.raw.mic());
         let true = mic_valid else {
             // Reject invalid MICs
             return None;
@@ -94,18 +105,18 @@ impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction, RawFrame> 
         let appskey = self.session.appskey();
         AesCtrBuilder::new::<Aes>(appskey)
             .set_direction(self.direction)
-            .set_address(self.state.address())
+            .set_address(self.state.raw.address())
             .set_frame_counter(frame_counter)
-            .apply(self.state.payload_mut());
+            .apply(self.state.raw.payload_mut());
 
         // Commit next frame counter
         let next_frame_counter = frame_counter.saturating_add(1);
         self.session.set_frame_counter(next_frame_counter, self.direction);
 
         // Build output struct
-        let frame_ctrl = self.state.frame_ctrl();
-        let frame_port = self.state.frame_port();
-        let (plaintext, plaintext_len) = self.state.into_payload();
+        let frame_ctrl = self.state.raw.frame_ctrl();
+        let frame_port = self.state.raw.frame_port();
+        let (plaintext, plaintext_len) = self.state.raw.into_payload();
         let output = PlaintextFrame { frame_counter, frame_ctrl, frame_port, plaintext, plaintext_len };
 
         // Init next step

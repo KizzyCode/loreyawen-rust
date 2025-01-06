@@ -32,6 +32,8 @@ pub fn uplink() {
 
     // Verify frame and validate session
     assert_eq!(plaintext.deref(), b"Testolope");
+    assert_eq!(plaintext.frame_ctrl(), 0x00);
+    assert_eq!(plaintext.frame_port(), 0x00);
     assert_eq!(session.frame_counter_uplink, 1, "invalid uplink frame counter");
     assert_eq!(session.frame_counter_downlink, 0, "invalid downlink frame counter");
 
@@ -39,13 +41,15 @@ pub fn uplink() {
     let plaintext = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Uplink)
-        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x01\x00\x00\x58\xCA\xD6\xBC\xDE\x59\x37\x74\x78\x95\xD6\xC5\x2C\xCA\x8E\x4B\x67")
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x04\x01\x00\x07\x58\xCA\xD6\xBC\xDE\x59\x37\x74\x78\xC7\xF3\x50\xF1\xF3\xB7\x4C\x65")
         .expect("unexpected invalid frame")
         .unpack()
         .expect("unexpected failure when unpacking frame");
 
     // Verify frame and validate session
     assert_eq!(plaintext.deref(), b"Testolope");
+    assert_eq!(plaintext.frame_ctrl(), 0x04);
+    assert_eq!(plaintext.frame_port(), 0x07);
     assert_eq!(session.frame_counter_uplink, 2, "invalid uplink frame counter");
     assert_eq!(session.frame_counter_downlink, 0, "invalid downlink frame counter");
 
@@ -61,6 +65,8 @@ pub fn uplink() {
 
     // Verify frame and validate session
     assert_eq!(plaintext.deref(), b"Testolope");
+    assert_eq!(plaintext.frame_ctrl(), 0x00);
+    assert_eq!(plaintext.frame_port(), 0x00);
     assert_eq!(session.frame_counter_uplink, 0x0001_0001, "invalid uplink frame counter");
     assert_eq!(session.frame_counter_downlink, 0, "invalid downlink frame counter");
 }
@@ -80,6 +86,8 @@ pub fn downlink() {
 
     // Verify frame and validate session
     assert_eq!(plaintext.deref(), b"Testolope");
+    assert_eq!(plaintext.frame_ctrl(), 0x00);
+    assert_eq!(plaintext.frame_port(), 0x00);
     assert_eq!(session.frame_counter_uplink, 0, "invalid uplink frame counter");
     assert_eq!(session.frame_counter_downlink, 1, "invalid downlink frame counter");
 
@@ -87,13 +95,15 @@ pub fn downlink() {
     let plaintext = FrameBuilder::new(&mut session)
         // Set uplink direction
         .set_direction(Direction::Downlink)
-        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x01\x00\x00\xD5\xE9\x9F\xB8\x45\xED\x61\x8B\x40\x55\xE7\x47\x31\xC5\x25\x7F\xA0")
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x04\x01\x00\x07\xD5\xE9\x9F\xB8\x45\xED\x61\x8B\x40\x5B\xA3\x56\xEA\x3E\xC7\xF2\xF5")
         .expect("unexpected invalid frame")
         .unpack()
         .expect("unexpected failure when unpacking frame");
 
     // Verify frame and validate session
     assert_eq!(plaintext.deref(), b"Testolope");
+    assert_eq!(plaintext.frame_ctrl(), 0x04);
+    assert_eq!(plaintext.frame_port(), 0x07);
     assert_eq!(session.frame_counter_uplink, 0, "invalid uplink frame counter");
     assert_eq!(session.frame_counter_downlink, 2, "invalid downlink frame counter");
 
@@ -109,6 +119,8 @@ pub fn downlink() {
 
     // Verify frame and validate session
     assert_eq!(plaintext.deref(), b"Testolope");
+    assert_eq!(plaintext.frame_ctrl(), 0x00);
+    assert_eq!(plaintext.frame_port(), 0x00);
     assert_eq!(session.frame_counter_uplink, 0, "invalid uplink frame counter");
     assert_eq!(session.frame_counter_downlink, 0x0001_0001, "invalid downlink frame counter");
 }
@@ -125,7 +137,30 @@ pub fn generic_invalid_format() {
     assert!(maybe_plaintext_builder.is_none(), "unexpected success when unpacking plaintext");
 }
 
-/// Open an invalid frame (tampered)
+/// Open an invalid frame (tampered header)
+#[test]
+pub fn uplink_downlink_tampered_header() {
+    // Open invalid uplink frame
+    let mut session = SESSION;
+    let maybe_plaintext = FrameBuilder::new(&mut session)
+        // Set uplink direction
+        .set_direction(Direction::Uplink)
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x00\x01\x00\x07\x58\xCA\xD6\xBC\xDE\x59\x37\x74\x78\xC7\xF3\x50\xF1\xF3\xB7\x4C\x65")
+        .expect("unexpected invalid frame")
+        .unpack();
+    assert!(maybe_plaintext.is_none(), "unexpected success when unpacking plaintext");
+
+    // Open invalid downlink frame
+    let maybe_plaintext = FrameBuilder::new(&mut session)
+        // Set uplink direction
+        .set_direction(Direction::Downlink)
+        .set_frame(b"\xE0\xEF\xBE\xAD\xDE\x04\x01\x00\x00\xD5\xE9\x9F\xB8\x45\xED\x61\x8B\x40\x5B\xA3\x56\xEA\x3E\xC7\xF2\xF5")
+        .expect("unexpected invalid frame")
+        .unpack();
+    assert!(maybe_plaintext.is_none(), "unexpected success when unpacking plaintext");
+}
+
+/// Open an invalid frame (tampered payload)
 #[test]
 pub fn uplink_downlink_tampered_data() {
     // Open invalid uplink frame

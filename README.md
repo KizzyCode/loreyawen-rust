@@ -22,9 +22,10 @@ This implementation assumes that a unique and random `appskey` and `nwkskey` are
 secure fashion. Those keys are used to encrypt and authenticate messages in an "accidentally" LoRaWAN compatible way;
 however it does not implement any other LoRaWAN semantics like media access control or session rekeying/reset.
 
-This means, `loreyawan` is _not_ affected by the common LoRaWAN security vulnerabilities. LoRaWAN's basic link-layer, as implemented by this crate, is a pretty simple packetcounter-encrypt-mac scheme, which is considered reasonably secure.
-Also, `loreyawen` optionally truncates the MIC to 64 bit instead of just 32 bit, as the security benefit might be
-significant, and the overhead is usually negligible.
+This means, `loreyawan` is _not_ affected by the common LoRaWAN security vulnerabilities. LoRaWAN's basic link-layer, as
+implemented by this crate, is a pretty simple packetcounter-encrypt-mac scheme, which is considered reasonably secure.
+Also, if the `extended-mic`-feature is enabled, `loreyawen` truncates the MIC to 64 bit instead of just 32 bit, as the
+security benefit might be significant, and the overhead is usually negligible.
 
 
 ## Dependency and Interoperability with LoRa(WAN)
@@ -54,5 +55,7 @@ MHDR[1] | DevAddr[4] | FCtrl[1] | FCnt[2] | FOpts[0..15] | FPort[0..1] | Payload
 ```
 
 This format is pretty similar to the regular uplink/downlink frames. The `FOpts` field is always ommitted, while the
-`FCtrl` and `FPort` field can be used to transmit application specific plaintext values. If the `extended-mic` feature
-is enabled, the MIC is truncated to 64 bit, instead of the 32 bit from default LoRaWAN.
+`FCtrl` and `FPort` field can be used to transmit arbitrary, application specific values. Please note that the `FCtrl`
+and `FPort` field are authenticated, but not encrypted.
+
+If the `extended-mic` feature is enabled, the MIC is truncated to 64 bit, instead of the 32 bit from default LoRaWAN.

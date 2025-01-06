@@ -17,6 +17,13 @@ pub const SESSION: MockSession = MockSession {
     frame_counter_downlink: 0,
 };
 
+fn dump(data: &[u8]) {
+    for byte in data {
+        print!("\\x{byte:02X}");
+    }
+    println!()
+}
+
 /// Seal uplink frames
 #[test]
 pub fn uplink() {
@@ -41,12 +48,14 @@ pub fn uplink() {
         // Set uplink direction
         .set_direction(Direction::Uplink)
         .set_plaintext(b"Testolope")
+        .set_frame_ctrl(0x04)
+        .set_frame_port(0x07)
         .pack();
 
     // Verify frame and validate session
     assert_eq!(
         frame.deref(),
-        b"\xE0\xEF\xBE\xAD\xDE\x00\x01\x00\x00\x58\xCA\xD6\xBC\xDE\x59\x37\x74\x78\x95\xD6\xC5\x2C\xCA\x8E\x4B\x67"
+        b"\xE0\xEF\xBE\xAD\xDE\x04\x01\x00\x07\x58\xCA\xD6\xBC\xDE\x59\x37\x74\x78\xC7\xF3\x50\xF1\xF3\xB7\x4C\x65"
     );
     assert_eq!(session.frame_counter_uplink, 2, "invalid uplink frame counter");
     assert_eq!(session.frame_counter_downlink, 0, "invalid downlink frame counter");
@@ -76,12 +85,15 @@ pub fn downlink() {
         // Set uplink direction
         .set_direction(Direction::Downlink)
         .set_plaintext(b"Testolope")
+        .set_frame_ctrl(0x04)
+        .set_frame_port(0x07)
         .pack();
 
     // Verify frame and validate session
+    dump(&frame);
     assert_eq!(
         frame.deref(),
-        b"\xE0\xEF\xBE\xAD\xDE\x00\x01\x00\x00\xD5\xE9\x9F\xB8\x45\xED\x61\x8B\x40\x55\xE7\x47\x31\xC5\x25\x7F\xA0"
+        b"\xE0\xEF\xBE\xAD\xDE\x04\x01\x00\x07\xD5\xE9\x9F\xB8\x45\xED\x61\x8B\x40\x5B\xA3\x56\xEA\x3E\xC7\xF2\xF5"
     );
     assert_eq!(session.frame_counter_uplink, 0, "invalid uplink frame counter");
     assert_eq!(session.frame_counter_downlink, 2, "invalid downlink frame counter");

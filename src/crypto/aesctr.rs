@@ -7,12 +7,19 @@ use crate::Direction;
 use core::marker::PhantomData;
 use ctr::Ctr128BE;
 
+/// The key used for AES keystream generation
+pub type Key = [u8; 16];
+/// The address of the associated end-device
+pub type Address = u32;
+/// The frame counter of the message to compute the MIC for
+pub type Counter = u32;
+
 /// A loreyawen-specific wrapper around AES-CTR to compute and apply a cipherstream
 #[derive(Debug, Clone, Copy)]
 pub struct AesCtrBuilder<Aes = (), Key = (), Direction = (), Address = (), Counter = ()> {
     /// The underlying implementation
     aes: Aes,
-    /// The key used for AES encryption
+    /// The key used for AES keystream generation
     appskey: Key,
     /// The direction of the message to compute/validate the MIC for
     direction: Direction,
@@ -23,32 +30,35 @@ pub struct AesCtrBuilder<Aes = (), Key = (), Direction = (), Address = (), Count
 }
 impl AesCtrBuilder {
     /// Create a new cipherstream with the given key and AES implementation
-    pub const fn new<Aes>(appskey: &[u8; 16]) -> AesCtrBuilder<PhantomData<Aes>, [u8; 16]> {
+    pub const fn new<Aes>(appskey: &Key) -> AesCtrBuilder<PhantomData<Aes>, Key> {
         AesCtrBuilder { aes: PhantomData, appskey: *appskey, direction: (), address: (), frame_counter: () }
     }
 }
-impl<Aes> AesCtrBuilder<PhantomData<Aes>, [u8; 16]> {
+impl<Aes> AesCtrBuilder<PhantomData<Aes>, Key> {
     /// Set the frame direction (Uplink or Downlink)
-    pub fn set_direction(self, direction: Direction) -> AesCtrBuilder<PhantomData<Aes>, [u8; 16], Direction> {
+    pub fn set_direction(self, direction: Direction) -> AesCtrBuilder<PhantomData<Aes>, Key, Direction> {
         let Self { aes, appskey, address, frame_counter, .. } = self;
         AesCtrBuilder { aes, appskey, direction, address, frame_counter }
     }
 }
-impl<Aes> AesCtrBuilder<PhantomData<Aes>, [u8; 16], Direction> {
+impl<Aes> AesCtrBuilder<PhantomData<Aes>, Key, Direction> {
     /// Sets the address of the associated end-device
-    pub fn set_address(self, address: u32) -> AesCtrBuilder<PhantomData<Aes>, [u8; 16], Direction, u32> {
+    pub fn set_address(self, address: Address) -> AesCtrBuilder<PhantomData<Aes>, Key, Direction, Address> {
         let Self { aes, appskey, direction, frame_counter, .. } = self;
         AesCtrBuilder { aes, appskey, direction, address, frame_counter }
     }
 }
-impl<Aes> AesCtrBuilder<PhantomData<Aes>, [u8; 16], Direction, u32> {
+impl<Aes> AesCtrBuilder<PhantomData<Aes>, Key, Direction, Address> {
     /// Sets the address of the associated end-device
-    pub fn set_frame_counter(self, counter: u32) -> AesCtrBuilder<PhantomData<Aes>, [u8; 16], Direction, u32, u32> {
+    pub fn set_frame_counter(
+        self,
+        frame_counter: Counter,
+    ) -> AesCtrBuilder<PhantomData<Aes>, Key, Direction, Address, Counter> {
         let Self { aes, appskey, direction, address, .. } = self;
-        AesCtrBuilder { aes, appskey, direction, address, frame_counter: counter }
+        AesCtrBuilder { aes, appskey, direction, address, frame_counter }
     }
 }
-impl<Aes> AesCtrBuilder<PhantomData<Aes>, [u8; 16], Direction, u32, u32> {
+impl<Aes> AesCtrBuilder<PhantomData<Aes>, Key, Direction, Address, Counter> {
     /// Processes the given data by applying the keystream
     ///
     /// # Panics
@@ -73,7 +83,7 @@ impl<Aes> AesCtrBuilder<PhantomData<Aes>, [u8; 16], Direction, u32, u32> {
 
     /// Generates the implicit block0, which is used to tie the message to its context
     #[inline]
-    fn block0(&self, direction: Direction, address: u32, frame_counter: u32) -> [u8; 16] {
+    fn block0(&self, direction: Direction, address: u32, frame_counter: u32) -> Key {
         // Destructure address and counter into bytes
         let address = address.to_le_bytes();
         let counter = frame_counter.to_le_bytes();

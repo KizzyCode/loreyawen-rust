@@ -1,7 +1,7 @@
 //! A builder to encrypt and seal a plaintext into a sealed frame
 
-use crate::crypto::aesctr::AesCtrBuilder;
 use crate::crypto::aescmac::AesCmacBuilder;
+use crate::crypto::aesctr::AesCtrBuilder;
 use crate::crypto::Aes128;
 use crate::frame::builder::FrameBuilder;
 use crate::frame::rawframe::RawFrame;
@@ -9,6 +9,13 @@ use crate::frame::MAX_MESSAGE_SIZE;
 use crate::{Direction, SessionState};
 use core::marker::PhantomData;
 use core::ops::Deref;
+
+/// A plaintext intermediate frame
+#[derive(Debug, Clone, Copy)]
+pub struct PlaintextFrame {
+    /// The underlying raw frame
+    raw: RawFrame,
+}
 
 /// A sealed frame
 #[derive(Debug, Clone, Copy)]
@@ -25,22 +32,26 @@ impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction> {
     ///
     /// # Panics
     /// This function panics if the payload is greater than [`MAX_PAYLOAD_SIZE`](crate::frame::MAX_PAYLOAD_SIZE).
-    pub fn set_plaintext(self, plaintext: &[u8]) -> FrameBuilder<PhantomData<Aes>, Session, Direction, RawFrame> {
-        let frame = RawFrame::new(plaintext);
+    pub fn set_plaintext(self, plaintext: &[u8]) -> FrameBuilder<PhantomData<Aes>, Session, Direction, PlaintextFrame> {
+        // Create frame
+        let raw = RawFrame::new(plaintext);
+        let frame = PlaintextFrame { raw };
+
+        // Init next step
         let Self { aes, session, direction, .. } = self;
         FrameBuilder { aes, session, direction, state: frame }
     }
 }
-impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction, RawFrame> {
+impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction, PlaintextFrame> {
     /// Sets the `FCtrl` byte
     pub fn set_frame_ctrl(mut self, frame_ctrl: u8) -> Self {
-        self.state.set_frame_ctrl(frame_ctrl);
+        self.state.raw.set_frame_ctrl(frame_ctrl);
         self
     }
 
     /// Sets the `FPort` byte
     pub fn set_frame_port(mut self, frame_port: u8) -> Self {
-        self.state.set_frame_port(frame_port);
+        self.state.raw.set_frame_port(frame_port);
         self
     }
 
@@ -58,8 +69,8 @@ impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction, RawFrame> 
         let next_frame_counter = self.session.frame_counter(self.direction);
 
         // Assemble frame
-        self.state.set_address(address);
-        self.state.set_frame_counter_lsbs(next_frame_counter as u16);
+        self.state.raw.set_address(address);
+        self.state.raw.set_frame_counter_lsbs(next_frame_counter as u16);
 
         // Encrypt payload
         let appskey = self.session.appskey();
@@ -67,22 +78,22 @@ impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction, RawFrame> 
             .set_direction(self.direction)
             .set_address(address)
             .set_frame_counter(next_frame_counter)
-            .apply(self.state.payload_mut());
+            .apply(self.state.raw.payload_mut());
 
         // Compute MIC
         let nwkskey = self.session.nwkskey();
-        *self.state.mic_mut() = AesCmacBuilder::new::<Aes>(nwkskey)
+        *self.state.raw.mic_mut() = AesCmacBuilder::new::<Aes>(nwkskey)
             .set_direction(self.direction)
             .set_address(address)
             .set_frame_counter(next_frame_counter)
-            .compute(self.state.header(), self.state.payload());
+            .compute(self.state.raw.header(), self.state.raw.payload());
 
         // Commit next frame counter
         let next_frame_counter = next_frame_counter.checked_add(1).expect("frame counter is exhaused");
         self.session.set_frame_counter(next_frame_counter, self.direction);
 
         // Build output
-        let (raw, raw_len) = self.state.into_frame();
+        let (raw, raw_len) = self.state.raw.into_frame();
         let output = SealedFrame { raw, raw_len };
 
         // Init next step

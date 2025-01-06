@@ -8,6 +8,13 @@ use cmac::{Cmac, Mac};
 use core::fmt::Debug;
 use core::marker::PhantomData;
 
+/// The key used for CMAC computation
+pub type Key = [u8; 16];
+/// The address of the associated end-device
+pub type Address = u32;
+/// The frame counter of the message to compute the MIC for
+pub type Counter = u32;
+
 /// A loreyawen-specific wrapper around AES-CMAC to compute/validate a MIC for a message
 #[derive(Debug, Clone, Copy)]
 pub struct AesCmacBuilder<Aes = (), Key = (), Direction = (), Address = (), Counter = ()> {
@@ -24,35 +31,35 @@ pub struct AesCmacBuilder<Aes = (), Key = (), Direction = (), Address = (), Coun
 }
 impl AesCmacBuilder {
     /// Create a new MIC with the given key and AES implementation
-    pub const fn new<Aes>(nwkskey: &[u8; 16]) -> AesCmacBuilder<PhantomData<Aes>, [u8; 16]> {
+    pub const fn new<Aes>(nwkskey: &Key) -> AesCmacBuilder<PhantomData<Aes>, Key> {
         AesCmacBuilder { aes: PhantomData, nwkskey: *nwkskey, direction: (), address: (), frame_counter: () }
     }
 }
-impl<Aes> AesCmacBuilder<PhantomData<Aes>, [u8; 16]> {
+impl<Aes> AesCmacBuilder<PhantomData<Aes>, Key> {
     /// Set the frame direction (Uplink or Downlink)
-    pub fn set_direction(self, direction: Direction) -> AesCmacBuilder<PhantomData<Aes>, [u8; 16], Direction> {
+    pub fn set_direction(self, direction: Direction) -> AesCmacBuilder<PhantomData<Aes>, Key, Direction> {
         let Self { aes, nwkskey, address, frame_counter, .. } = self;
         AesCmacBuilder { aes, nwkskey, direction, address, frame_counter }
     }
 }
-impl<Aes> AesCmacBuilder<PhantomData<Aes>, [u8; 16], Direction> {
+impl<Aes> AesCmacBuilder<PhantomData<Aes>, Key, Direction> {
     /// Sets the address of the associated end-device
-    pub fn set_address(self, address: u32) -> AesCmacBuilder<PhantomData<Aes>, [u8; 16], Direction, u32> {
+    pub fn set_address(self, address: Address) -> AesCmacBuilder<PhantomData<Aes>, Key, Direction, Address> {
         let Self { aes, nwkskey, direction, frame_counter, .. } = self;
         AesCmacBuilder { aes, nwkskey, direction, address, frame_counter }
     }
 }
-impl<Aes> AesCmacBuilder<PhantomData<Aes>, [u8; 16], Direction, u32> {
+impl<Aes> AesCmacBuilder<PhantomData<Aes>, Key, Direction, Address> {
     /// Sets the address of the associated end-device
     pub fn set_frame_counter(
         self,
-        frame_counter: u32,
-    ) -> AesCmacBuilder<PhantomData<Aes>, [u8; 16], Direction, u32, u32> {
+        frame_counter: Counter,
+    ) -> AesCmacBuilder<PhantomData<Aes>, Key, Direction, Address, Counter> {
         let Self { aes, nwkskey, direction, address, .. } = self;
         AesCmacBuilder { aes, nwkskey, direction, address, frame_counter }
     }
 }
-impl<Aes> AesCmacBuilder<PhantomData<Aes>, [u8; 16], Direction, u32, u32> {
+impl<Aes> AesCmacBuilder<PhantomData<Aes>, Key, Direction, Address, Counter> {
     /// Compute the MIC for a given message
     ///
     /// # Panics
