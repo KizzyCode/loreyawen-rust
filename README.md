@@ -11,7 +11,7 @@
 Welcome to `loreyawen` 🎉
 
 `loreyawen` provides an encrypted "connection" for low-datarate networks by piggybacking on LoRaWANs link encryption. 
-This crate uses an existing or artificially botstrapped LoRaWAN session to pack payloads into "proprietary" (aka
+This crate uses an existing or artificially bootstrapped LoRaWAN session to pack payloads into "proprietary" (aka
 `0b111`-prefixed) LoRaWAN frames. Messages are encrypted using AES-CTR using the `appskey`, and packed into this minimal
 LoRaWAN frame and authenticated using AES-CMAC using the `nwkskey`. See `TS001-1.0.4 LoRaWAN® L2 1.0.4 Specification`
 for more information on the LoRaWAN link-layer encryption.
