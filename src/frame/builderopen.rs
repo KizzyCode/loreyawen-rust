@@ -11,7 +11,8 @@ use core::ops::Deref;
 
 /// A sealed intermediate frame
 #[derive(Debug, Clone, Copy)]
-pub struct SealedFrame {
+#[doc(hidden)]
+pub struct IntermediateFrame {
     /// The underlying raw frame
     raw: RawFrame,
 }
@@ -56,17 +57,17 @@ impl Deref for PlaintextFrame {
 // Implement decryption logic
 impl<Aes, Session> FrameBuilder<Aes, Session, Direction> {
     /// Parses a raw frame
-    pub fn set_frame(self, frame: &[u8]) -> Option<FrameBuilder<Aes, Session, Direction, SealedFrame>> {
+    pub fn set_frame(self, frame: &[u8]) -> Option<FrameBuilder<Aes, Session, Direction, IntermediateFrame>> {
         // Parse frame
         let raw = RawFrame::parse(frame)?;
-        let frame = SealedFrame { raw };
+        let frame = IntermediateFrame { raw };
 
         // Init next step
         let Self { aes, session, direction, .. } = self;
         Some(FrameBuilder { aes, session, direction, state: frame })
     }
 }
-impl<Aes, Session> FrameBuilder<Aes, Session, Direction, SealedFrame> {
+impl<Aes, Session> FrameBuilder<Aes, Session, Direction, IntermediateFrame> {
     /// This is a reserved frame counter that must not be used by frames, so implementations can use it as marker value
     /// to e.g. mark a session as exhausted
     ///

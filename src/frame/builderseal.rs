@@ -11,7 +11,8 @@ use core::ops::Deref;
 
 /// A plaintext intermediate frame
 #[derive(Debug, Clone, Copy)]
-pub struct PlaintextFrame {
+#[doc(hidden)]
+pub struct IntermediateFrame {
     /// The underlying raw frame
     raw: RawFrame,
 }
@@ -39,17 +40,17 @@ impl<Aes, Session> FrameBuilder<Aes, Session, Direction> {
     ///
     /// # Panics
     /// This function panics if the payload is greater than [`MAX_PAYLOAD_SIZE`](crate::frame::MAX_PAYLOAD_SIZE).
-    pub fn set_plaintext(self, plaintext: &[u8]) -> FrameBuilder<Aes, Session, Direction, PlaintextFrame> {
+    pub fn set_plaintext(self, plaintext: &[u8]) -> FrameBuilder<Aes, Session, Direction, IntermediateFrame> {
         // Create frame
         let raw = RawFrame::new(plaintext);
-        let frame = PlaintextFrame { raw };
+        let frame = IntermediateFrame { raw };
 
         // Init next step
         let Self { aes, session, direction, .. } = self;
         FrameBuilder { aes, session, direction, state: frame }
     }
 }
-impl<Aes, Session> FrameBuilder<Aes, Session, Direction, PlaintextFrame> {
+impl<Aes, Session> FrameBuilder<Aes, Session, Direction, IntermediateFrame> {
     /// Sets the `FCtrl` byte
     pub fn set_frame_ctrl(mut self, frame_ctrl: u8) -> Self {
         self.state.raw.set_frame_ctrl(frame_ctrl);
