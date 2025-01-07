@@ -24,6 +24,14 @@ pub struct SealedFrame {
     /// The length of the raw frame
     raw_len: usize,
 }
+impl Deref for SealedFrame {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        #[allow(clippy::indexing_slicing, reason = "Length is trusted here")]
+        &self.raw[..self.raw_len]
+    }
+}
 
 // Implement encryption logic
 impl<Aes, Session> FrameBuilder<Aes, Session, Direction> {
@@ -101,10 +109,9 @@ impl<Aes, Session> FrameBuilder<Aes, Session, Direction, PlaintextFrame> {
     }
 }
 impl<Aes, Session> Deref for FrameBuilder<Aes, Session, Direction, SealedFrame> {
-    type Target = [u8];
+    type Target = SealedFrame;
 
     fn deref(&self) -> &Self::Target {
-        #[allow(clippy::indexing_slicing, reason = "Length is trusted here")]
-        &self.state.raw[..self.state.raw_len]
+        &self.state
     }
 }

@@ -6,7 +6,6 @@ mod session;
 
 use loreyawen::{Direction, FrameBuilder};
 use session::MockSession;
-use std::ops::Deref;
 
 /// The mock session to use in the tests
 pub const SESSION: MockSession = MockSession {
@@ -31,7 +30,7 @@ pub fn uplink() {
         .expect("unexpected failure when unpacking frame");
 
     // Verify frame and validate session
-    assert_eq!(plaintext.deref(), b"Testolope");
+    assert_eq!(&plaintext[..], b"Testolope");
     assert_eq!(plaintext.frame_ctrl(), 0x00);
     assert_eq!(plaintext.frame_port(), 0x00);
     assert_eq!(session.frame_counter_uplink, 1, "invalid uplink frame counter");
@@ -47,7 +46,7 @@ pub fn uplink() {
         .expect("unexpected failure when unpacking frame");
 
     // Verify frame and validate session
-    assert_eq!(plaintext.deref(), b"Testolope");
+    assert_eq!(&plaintext[..], b"Testolope");
     assert_eq!(plaintext.frame_ctrl(), 0x04);
     assert_eq!(plaintext.frame_port(), 0x07);
     assert_eq!(session.frame_counter_uplink, 2, "invalid uplink frame counter");
@@ -64,7 +63,7 @@ pub fn uplink() {
         .expect("unexpected failure when unpacking frame");
 
     // Verify frame and validate session
-    assert_eq!(plaintext.deref(), b"Testolope");
+    assert_eq!(&plaintext[..], b"Testolope");
     assert_eq!(plaintext.frame_ctrl(), 0x00);
     assert_eq!(plaintext.frame_port(), 0x00);
     assert_eq!(session.frame_counter_uplink, 0x0001_0001, "invalid uplink frame counter");
@@ -85,7 +84,7 @@ pub fn downlink() {
         .expect("unexpected failure when unpacking frame");
 
     // Verify frame and validate session
-    assert_eq!(plaintext.deref(), b"Testolope");
+    assert_eq!(&plaintext[..], b"Testolope");
     assert_eq!(plaintext.frame_ctrl(), 0x00);
     assert_eq!(plaintext.frame_port(), 0x00);
     assert_eq!(session.frame_counter_uplink, 0, "invalid uplink frame counter");
@@ -101,7 +100,7 @@ pub fn downlink() {
         .expect("unexpected failure when unpacking frame");
 
     // Verify frame and validate session
-    assert_eq!(plaintext.deref(), b"Testolope");
+    assert_eq!(&plaintext[..], b"Testolope");
     assert_eq!(plaintext.frame_ctrl(), 0x04);
     assert_eq!(plaintext.frame_port(), 0x07);
     assert_eq!(session.frame_counter_uplink, 0, "invalid uplink frame counter");
@@ -118,7 +117,7 @@ pub fn downlink() {
         .expect("unexpected failure when unpacking frame");
 
     // Verify frame and validate session
-    assert_eq!(plaintext.deref(), b"Testolope");
+    assert_eq!(&plaintext[..], b"Testolope");
     assert_eq!(plaintext.frame_ctrl(), 0x00);
     assert_eq!(plaintext.frame_port(), 0x00);
     assert_eq!(session.frame_counter_uplink, 0, "invalid uplink frame counter");

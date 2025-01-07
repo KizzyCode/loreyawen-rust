@@ -30,6 +30,28 @@ pub struct PlaintextFrame {
     /// The plaintext length
     plaintext_len: usize,
 }
+impl PlaintextFrame {
+    /// The frame counter
+    pub fn frame_counter(&self) -> u32 {
+        self.frame_counter
+    }
+    /// The `FCtrl` field
+    pub fn frame_ctrl(&self) -> u8 {
+        self.frame_ctrl
+    }
+    /// The `FPort` field
+    pub fn frame_port(&self) -> u8 {
+        self.frame_port
+    }
+}
+impl Deref for PlaintextFrame {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        #[allow(clippy::indexing_slicing, reason = "Length is trusted here")]
+        &self.plaintext[..self.plaintext_len]
+    }
+}
 
 // Implement decryption logic
 impl<Aes, Session> FrameBuilder<Aes, Session, Direction> {
@@ -164,10 +186,9 @@ impl<Aes, Session> FrameBuilder<Aes, Session, Direction, PlaintextFrame> {
     }
 }
 impl<Aes, Session> Deref for FrameBuilder<Aes, Session, Direction, PlaintextFrame> {
-    type Target = [u8];
+    type Target = PlaintextFrame;
 
     fn deref(&self) -> &Self::Target {
-        #[allow(clippy::indexing_slicing, reason = "Length is trusted here")]
-        &self.state.plaintext[..self.state.plaintext_len]
+        &self.state
     }
 }
