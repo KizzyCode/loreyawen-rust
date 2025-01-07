@@ -7,7 +7,6 @@ use crate::frame::builder::FrameBuilder;
 use crate::frame::rawframe::RawFrame;
 use crate::frame::MAX_MESSAGE_SIZE;
 use crate::{Direction, SessionState};
-use core::marker::PhantomData;
 use core::ops::Deref;
 
 /// A plaintext intermediate frame
@@ -27,12 +26,12 @@ pub struct SealedFrame {
 }
 
 // Implement encryption logic
-impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction> {
+impl<Aes, Session> FrameBuilder<Aes, Session, Direction> {
     /// Sets and parses the frame
     ///
     /// # Panics
     /// This function panics if the payload is greater than [`MAX_PAYLOAD_SIZE`](crate::frame::MAX_PAYLOAD_SIZE).
-    pub fn set_plaintext(self, plaintext: &[u8]) -> FrameBuilder<PhantomData<Aes>, Session, Direction, PlaintextFrame> {
+    pub fn set_plaintext(self, plaintext: &[u8]) -> FrameBuilder<Aes, Session, Direction, PlaintextFrame> {
         // Create frame
         let raw = RawFrame::new(plaintext);
         let frame = PlaintextFrame { raw };
@@ -42,7 +41,7 @@ impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction> {
         FrameBuilder { aes, session, direction, state: frame }
     }
 }
-impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction, PlaintextFrame> {
+impl<Aes, Session> FrameBuilder<Aes, Session, Direction, PlaintextFrame> {
     /// Sets the `FCtrl` byte
     pub fn set_frame_ctrl(mut self, frame_ctrl: u8) -> Self {
         self.state.raw.set_frame_ctrl(frame_ctrl);
@@ -59,7 +58,7 @@ impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction, PlaintextF
     ///
     /// # Panics
     /// This function panics if the frame counter for the configured direction is exhausted.
-    pub fn pack(mut self) -> FrameBuilder<PhantomData<Aes>, Session, Direction, SealedFrame>
+    pub fn pack(mut self) -> FrameBuilder<Aes, Session, Direction, SealedFrame>
     where
         Session: SessionState,
         Aes: Aes128,
@@ -101,7 +100,7 @@ impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction, PlaintextF
         FrameBuilder { aes, session, direction, state: output }
     }
 }
-impl<Aes, Session> Deref for FrameBuilder<PhantomData<Aes>, Session, Direction, SealedFrame> {
+impl<Aes, Session> Deref for FrameBuilder<Aes, Session, Direction, SealedFrame> {
     type Target = [u8];
 
     fn deref(&self) -> &Self::Target {

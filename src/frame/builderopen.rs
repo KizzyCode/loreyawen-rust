@@ -7,7 +7,6 @@ use crate::frame::builder::FrameBuilder;
 use crate::frame::rawframe::RawFrame;
 use crate::frame::MAX_PAYLOAD_SIZE;
 use crate::{Direction, SessionState};
-use core::marker::PhantomData;
 use core::ops::Deref;
 
 /// A sealed intermediate frame
@@ -33,9 +32,9 @@ pub struct PlaintextFrame {
 }
 
 // Implement decryption logic
-impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction> {
+impl<Aes, Session> FrameBuilder<Aes, Session, Direction> {
     /// Parses a raw frame
-    pub fn set_frame(self, frame: &[u8]) -> Option<FrameBuilder<PhantomData<Aes>, Session, Direction, SealedFrame>> {
+    pub fn set_frame(self, frame: &[u8]) -> Option<FrameBuilder<Aes, Session, Direction, SealedFrame>> {
         // Parse frame
         let raw = RawFrame::parse(frame)?;
         let frame = SealedFrame { raw };
@@ -45,7 +44,7 @@ impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction> {
         Some(FrameBuilder { aes, session, direction, state: frame })
     }
 }
-impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction, SealedFrame> {
+impl<Aes, Session> FrameBuilder<Aes, Session, Direction, SealedFrame> {
     /// This is a reserved frame counter that must not be used by frames, so implementations can use it as marker value
     /// to e.g. mark a session as exhausted
     ///
@@ -65,7 +64,7 @@ impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction, SealedFram
     /// 3. Validate the MIC over header and payload
     /// 4. Decrypt the payload
     /// 4. Commit the frame counter of the message to the message state
-    pub fn unpack(mut self) -> Option<FrameBuilder<PhantomData<Aes>, Session, Direction, PlaintextFrame>>
+    pub fn unpack(mut self) -> Option<FrameBuilder<Aes, Session, Direction, PlaintextFrame>>
     where
         Session: SessionState,
         Aes: Aes128,
@@ -148,7 +147,7 @@ impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction, SealedFram
         }
     }
 }
-impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction, PlaintextFrame> {
+impl<Aes, Session> FrameBuilder<Aes, Session, Direction, PlaintextFrame> {
     /// Gets the frame counter
     pub fn frame_counter(&self) -> u32 {
         self.state.frame_counter
@@ -164,7 +163,7 @@ impl<Aes, Session> FrameBuilder<PhantomData<Aes>, Session, Direction, PlaintextF
         self.state.frame_port
     }
 }
-impl<Aes, Session> Deref for FrameBuilder<PhantomData<Aes>, Session, Direction, PlaintextFrame> {
+impl<Aes, Session> Deref for FrameBuilder<Aes, Session, Direction, PlaintextFrame> {
     type Target = [u8];
 
     fn deref(&self) -> &Self::Target {
