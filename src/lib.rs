@@ -43,5 +43,9 @@ pub trait SessionState {
     fn set_frame_counter(&mut self, counter: u32, direction: Direction);
 }
 
-// Re-export entry types
-pub use crate::frame::builder::FrameBuilder;
+/// A frame builder
+#[cfg(not(feature = "aes"))]
+pub type FrameBuilder = crate::frame::builder::FrameBuilder;
+/// A frame builder using [`aes::Aes128`] as default implementation
+#[cfg(feature = "aes")]
+pub type FrameBuilder = crate::frame::builder::FrameBuilder<aes::Aes128>;
