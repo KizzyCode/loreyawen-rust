@@ -45,7 +45,7 @@ pub trait SessionState {
 
 /// A frame builder
 #[cfg(not(feature = "aes"))]
-pub type FrameBuilder = crate::frame::builder::FrameBuilder;
+pub type FrameBuilder = crate::frame::builder::FrameBuilder<()>;
 /// A frame builder using [`aes::Aes128`] as default implementation
 #[cfg(feature = "aes")]
 pub type FrameBuilder = crate::frame::builder::FrameBuilder<aes::Aes128>;
