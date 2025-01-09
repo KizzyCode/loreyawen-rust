@@ -3,17 +3,6 @@
 use crate::Direction;
 use core::marker::PhantomData;
 
-/// An unspecified AES implementation
-pub type AesUnspecified = ();
-
-/// The selected default AES implementation (unspecified)
-#[cfg(not(feature = "aes"))]
-pub type DefaultAes = ();
-
-/// The selected default AES implementation ([`aes::Aes128`])
-#[cfg(feature = "aes")]
-pub type DefaultAes = aes::Aes128;
-
 /// A frame builder
 #[derive(Debug, Clone, Copy)]
 pub struct FrameBuilder<Aes, Session = (), Direction = (), State = ()> {
