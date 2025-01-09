@@ -76,7 +76,7 @@ impl<Aes, Session> FrameBuilder<Aes, Session, Direction, IntermediateFrame> {
     /// increment the counter. After the last allowed message (`MAX - 1`) has been received, another increment yields
     /// `MAX`, and since `MAX` is reserved and always rejected, the session automatically enters a state where it cannot
     /// process any more messages, as there are no more valid frame counter values left.
-    pub(in crate::frame) const RESERVED_FRAME_COUNTER: u32 = u32::MAX;
+    pub const RESERVED_FRAME_COUNTER: u32 = u32::MAX;
 
     /// Validates the frame against the session and decrypts the plaintext
     ///
