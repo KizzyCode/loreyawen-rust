@@ -7,6 +7,8 @@ use crate::frame::builder::FrameBuilder;
 use crate::frame::rawframe::RawFrame;
 use crate::frame::MAX_MESSAGE_SIZE;
 use crate::{Direction, SessionState};
+use core::array::IntoIter;
+use core::iter::Take;
 use core::ops::Deref;
 
 /// A plaintext intermediate frame
@@ -31,6 +33,14 @@ impl Deref for SealedFrame {
     fn deref(&self) -> &Self::Target {
         #[allow(clippy::indexing_slicing, reason = "Length is trusted here")]
         &self.raw[..self.raw_len]
+    }
+}
+impl IntoIterator for SealedFrame {
+    type Item = u8;
+    type IntoIter = Take<IntoIter<u8, MAX_MESSAGE_SIZE>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.raw.into_iter().take(self.raw_len)
     }
 }
 

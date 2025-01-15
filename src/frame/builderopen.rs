@@ -7,6 +7,8 @@ use crate::frame::builder::FrameBuilder;
 use crate::frame::rawframe::RawFrame;
 use crate::frame::MAX_PAYLOAD_SIZE;
 use crate::{Direction, SessionState};
+use core::array::IntoIter;
+use core::iter::Take;
 use core::ops::Deref;
 
 /// A sealed intermediate frame
@@ -51,6 +53,14 @@ impl Deref for PlaintextFrame {
     fn deref(&self) -> &Self::Target {
         #[allow(clippy::indexing_slicing, reason = "Length is trusted here")]
         &self.plaintext[..self.plaintext_len]
+    }
+}
+impl IntoIterator for PlaintextFrame {
+    type Item = u8;
+    type IntoIter = Take<IntoIter<u8, MAX_PAYLOAD_SIZE>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.plaintext.into_iter().take(self.plaintext_len)
     }
 }
 
