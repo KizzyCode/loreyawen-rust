@@ -34,6 +34,10 @@ pub struct PlaintextFrame {
     plaintext_len: usize,
 }
 impl PlaintextFrame {
+    /// An all-zero plaintext frame for e.g. array initialization
+    pub const ZERO: Self =
+        Self { frame_counter: 0, frame_ctrl: 0, frame_port: 0, plaintext: [0; MAX_PAYLOAD_SIZE], plaintext_len: 0 };
+
     /// The frame counter
     pub fn frame_counter(&self) -> u32 {
         self.frame_counter

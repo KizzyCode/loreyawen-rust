@@ -27,6 +27,10 @@ pub struct SealedFrame {
     /// The length of the raw frame
     raw_len: usize,
 }
+impl SealedFrame {
+    /// An all-zero sealed frame for e.g. array initialization
+    pub const ZERO: Self = Self { raw: [0; MAX_MESSAGE_SIZE], raw_len: 0 };
+}
 impl Deref for SealedFrame {
     type Target = [u8];
 
