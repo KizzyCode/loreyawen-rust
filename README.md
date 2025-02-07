@@ -59,3 +59,6 @@ This format is pretty similar to the regular uplink/downlink frames. The `FOpts`
 and `FPort` field are authenticated, but not encrypted.
 
 If the `extended-mic` feature is enabled, the MIC is truncated to 64 bit, instead of the 32 bit from default LoRaWAN.
+This is not a fault-problem, as any implementation should not try to work with proprietary frames it doesn't know about.
+Even if they do, they will split incorrectly between payload and MIC, yielding a MIC error which should make them drop
+the packet.
