@@ -20,6 +20,7 @@ pub mod frame;
 pub mod session;
 
 // Re-export session types
+pub use crate::frame::rawframe::RawFrame;
 pub use crate::session::{Direction, SessionRefMut, SessionState};
 
 /// A frame builder

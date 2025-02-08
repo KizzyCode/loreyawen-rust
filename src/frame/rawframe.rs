@@ -4,10 +4,25 @@ use crate::frame::{MAX_MESSAGE_SIZE, MAX_PAYLOAD_SIZE};
 
 /// A raw frame structure for (de-)serialisation
 ///
+/// # ⚠️ HAZMAT ⚠️
+/// Raw frames are **unvalidated**. While they might be useful to quickly reject frames (e.g. due to format or address
+/// mismatch), they __MUST NOT__ be used for any real purposes. Always treat the data from a [`RawFrame`] as untrusted
+/// and potentially malicious.
+///
 /// # Implementation Note
-/// This frame uses the proprietary frame type (`FType: 0b111`), and strips the unused `FCtrl`, `FOpts` and `FPort`
-/// fields. Otherwise, the basic frame structure is identical to normal uplink/downlink frames; especially with regards
-/// to context information like device address and frame counter.
+/// `loreyawen` uses a LoRaWAN-proprietary frame format, with the following fields:
+/// - 1 byte `MHDR`, fixed to `0b111_000_00` (indicates a "proprietary" frame for LoRaWAN version 1.0)
+/// - 8 bytes `FHDR`, consisting of 4 bytes `DevAddr`, 1 byte `FCtrl`, 2 bytes `FCnt`, and 1 byte `FPort`
+/// - N bytes encrypted payload
+/// - 4 or 8 bytes `MIC` (which is just a less-truncated version of the default LoRaWAN MIC)
+///
+/// ```ascii
+/// Loreyawen Frame:
+/// MHDR[1] | DevAddr[4] | FCtrl[1] | FCnt[2] |     FOpts[0] |    FPort[1] | Payload[N] | MIC[4 or 8]
+///
+/// LoRaWAN Uplink/Downlink Frame as Reference:
+/// MHDR[1] | DevAddr[4] | FCtrl[1] | FCnt[2] | FOpts[0..15] | FPort[0..1] | Payload[N] | MIC[4]
+/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct RawFrame {
     /// The frame header
